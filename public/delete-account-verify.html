@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Verify OTP - Delete Account</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 2rem auto; padding: 1rem; }
+    label { display:block; margin-top: 0.75rem; }
+    input, textarea { width:100%; padding:0.5rem; margin-top:0.25rem; box-sizing: border-box; }
+    button { margin-top: 1rem; padding: 0.6rem 1rem; }
+    .status { margin-top: 1rem; padding: 0.6rem; border-radius:4px; }
+    .success { background: #e6ffed; border: 1px solid #2ecc71; color: #114b2b; }
+    .error { background: #ffe6e6; border: 1px solid #ff4d4d; color: #6b0000; }
+    .hint { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Verify OTP</h1>
+  <p>Enter the OTP you received to delete your account.</p>
+
+  <div id="hashContainer" style="display:none;">
+    <label>
+      Verification token (hash)
+      <textarea id="hashInput" rows="3" placeholder="Paste hash here if not auto-filled"></textarea>
+    </label>
+    <div class="hint">This is auto-filled if you came from the previous step on the same device.</div>
+  </div>
+
+  <label>
+    OTP
+    <input type="number" id="otp" inputmode="numeric" placeholder="5-digit code" />
+  </label>
+  <button id="verifyBtn">Verify & Delete</button>
+
+  <div id="status" class="status" style="display:none;"></div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const otpEl = document.getElementById('otp');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const hashContainer = document.getElementById('hashContainer');
+    const hashInput = document.getElementById('hashInput');
+
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (type === 'error' ? 'error' : 'success');
+      statusEl.style.display = 'block';
+    }
+
+    function readHash() {
+      const params = new URLSearchParams(window.location.search);
+      const fromQuery = params.get('hash');
+      let fromStorage = null;
+      try { fromStorage = localStorage.getItem('qc_delete_hash'); } catch (e) {}
+      const h = fromQuery || fromStorage || '';
+      if (!h) {
+        hashContainer.style.display = 'block';
+      }
+      return h;
+    }
+
+    let deleteHash = readHash();
+
+    verifyBtn.addEventListener('click', async () => {
+      statusEl.style.display = 'none';
+      if (!deleteHash) {
+        deleteHash = hashInput.value.trim();
+      }
+      const otp = otpEl.value.trim();
+      if (!deleteHash) {
+        showStatus('Missing verification token (hash).', 'error');
+        return;
+      }
+      if (!otp) {
+        showStatus('Please enter the OTP.', 'error');
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      try {
+        const res = await fetch('/user/delete_verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hash: deleteHash, otp: Number(otp) })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json?.success) {
+          const msg = json?.data?.message || json?.message || 'Failed to verify OTP';
+          showStatus(msg, 'error');
+          verifyBtn.disabled = false;
+          return;
+        }
+        showStatus('Your account has been deleted successfully.', 'success');
+        otpEl.disabled = true;
+        verifyBtn.disabled = true;
+      } catch (err) {
+        showStatus('Network error: ' + err.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

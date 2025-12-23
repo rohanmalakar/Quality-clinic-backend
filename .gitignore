@@ -1,0 +1,14 @@
+node_modules/
+src/utils/constants.ts
+error.log
+dist/
+yarn.lock
+.env
+.DS_Store
+npm/
+.vscode/
+coverage/
+.idea/
+yarn-error.log
+package.json
+package-lock.json
