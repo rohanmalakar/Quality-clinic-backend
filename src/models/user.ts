@@ -32,6 +32,7 @@ export interface User extends RowDataPacket {
 
 
 export interface AuthUser {
+    id: number;
     full_name: string;
     email_address: string;
     phone_number: string;

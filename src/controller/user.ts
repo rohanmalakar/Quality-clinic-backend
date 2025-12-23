@@ -195,7 +195,7 @@ router.post('/login_phone_verify',
     async function (req: Request, res: Response, next: NextFunction) {
         const body: z.infer<typeof SCHEMA.LOGIN_VERIFY> = req.body
 
-        console.log(body);
+        console.log("login_phone_verify body:", body);
         try {
             const user = await userService.loginPhoneVerify(body.hash, body.otp);
             res.send(successResponse(user));
@@ -264,6 +264,7 @@ router.put('/',
             }
             const user = await userService.updateUser(req.userID!!, body.email_address, body.full_name, body.national_id, body.photo_url);
             res.send(successResponse({
+                id: user.id,
                 full_name: user.full_name,
                 email_address: user.email_address,
                 phone_number: user.phone_number,
@@ -285,6 +286,22 @@ router.get('/userMetrics',
             }
             const metrics = await userService.getUserMetrics();
             res.send(successResponse(metrics));
+        } catch (e) {
+            next(e)
+        }
+    }
+)
+
+router.get('/profile',
+    verifyClient,
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.userID) {
+                next(ERRORS.AUTH_UNAUTHERISED);
+                return;
+            }
+            const profile = await userService.getUserProfile(req.userID!!);
+            res.send(successResponse(profile));
         } catch (e) {
             next(e)
         }

@@ -37,8 +37,8 @@ export class UserService {
         try {
             connection = await pool.getConnection();
             await this.userRepository.checkIfUserExists(connection, email, phone_number, national_id);
-            //const otp = await this.smsRepository.sendOTP(phone_number);
-            const otp = 12345; // TODO: Remove hardcoded OTP
+            const otp = await this.smsRepository.sendOTP(phone_number);
+           // const otp = 12345; // TODO: Remove hardcoded OTP
             const data = {
                 email,
                 name,
@@ -78,6 +78,7 @@ export class UserService {
             const accessToken = createAuthToken({ id: user.id, is_admin: user.is_admin });
             const refreshToken = createRefreshToken({ id: user.id, is_admin: user.is_admin });
             return {
+                id: user.id,
                 full_name: user.full_name,
                 email_address: user.email_address,
                 phone_number: user.phone_number,
@@ -111,6 +112,7 @@ export class UserService {
             const accessToken = createAuthToken({ id: user.id, is_admin: user.is_admin });
             const refreshToken = createRefreshToken({ id: user.id, is_admin: user.is_admin });
             return {
+                id: user.id,
                 full_name: user.full_name,
                 email_address: user.email_address,
                 phone_number: user.phone_number,
@@ -149,6 +151,7 @@ export class UserService {
             const accessToken = createAuthToken({ id: user.id, is_admin: user.is_admin });
             const refreshToken = createRefreshToken({ id: user.id, is_admin: user.is_admin });
             return {
+                id: user.id,
                 full_name: user.full_name,
                 email_address: user.email_address,
                 phone_number: user.phone_number,
@@ -180,6 +183,10 @@ export class UserService {
                 throw ERRORS.USER_NOT_FOUND;
             }
             const otp = await this.smsRepository.sendOTP(phone_number);
+            //const otp = 123456; // TODO: Remove hardcoded OTP
+            console.log(
+                "Generated OTP for phone login:", otp
+            );
             const data = {
                 phone_number,
                 otp
@@ -214,7 +221,10 @@ export class UserService {
             }
             const accessToken = createAuthToken({ id: user.id, is_admin: user.is_admin });
             const refreshToken = createRefreshToken({ id: user.id, is_admin: user.is_admin });
+
+            console.log("accessToken:", accessToken );
             return {
+                id: user.id ,
                 full_name: user.full_name,
                 email_address: user.email_address,
                 phone_number: user.phone_number,
@@ -248,6 +258,8 @@ export class UserService {
             }
             const accessToken = createAuthToken({ id: user.id, is_admin: user.is_admin });
             return {
+
+                id: user.id,
                 full_name: user.full_name,
                 email_address: user.email_address,
                 phone_number: user.phone_number,
@@ -277,6 +289,43 @@ export class UserService {
             await this.userRepository.updateUser(connection, id, email_address, full_name, national_id, photo_url);
             const updatedUser = await this.userRepository.getUserById(connection, id);
             return updatedUser;
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            } else {
+                logger.error(e);
+                throw ERRORS.INTERNAL_SERVER_ERROR;
+            }
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
+
+    async getUserProfile(id: number): Promise<{
+        id: number;
+        full_name: string;
+        email_address: string;
+        phone_number: string;
+        national_id?: string;
+        photo_url?: string;
+    }> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            const user = await this.userRepository.getUserById(connection, id);
+            if (!user) {
+                throw ERRORS.USER_NOT_FOUND;
+            }
+            return {
+                id: user.id,
+                full_name: user.full_name,
+                email_address: user.email_address,
+                phone_number: user.phone_number,
+                national_id: user.national_id,
+                photo_url: user.photo_url
+            };
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;

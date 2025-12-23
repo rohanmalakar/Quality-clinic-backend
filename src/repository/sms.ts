@@ -5,9 +5,9 @@ export default class SMSRepository {
   async sendOTP(phoneNumber: string): Promise<number> {
     console.log({ SMS_USER, SMS_PASSWORD, SMS_SENDER_ID });
 
-    // const otp = 12345;
-    const otp = Math.floor(10000 + Math.random() * 90000);
-    console.log(otp);
+     const otp = 12345;
+   // const otp = Math.floor(10000 + Math.random() * 90000);
+  
     const message = `Your OTP for Quality clinic registration is ${otp}  رقم التسجيل الخاص بك في عيادة الجودة OTP هو ${otp}`;
     // const url = `https://mshastra.com/sendurl.aspx?user=${SMS_USER}&pwd=${SMS_PASSWORD}&senderid=${SMS_SENDER_ID}&mobileno=${phoneNumber}&msgtext=${message}&priority=High&CountryCode=ALL`
     
