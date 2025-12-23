@@ -2,10 +2,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const PORT = 3002
+export const PORT = parseInt(process.env.PORT || '3001');
 export const JWT_AUTH_SECRET = process.env.JWT_AUTH_SECRET || '3f8a2e9b4c6d1f5e7a9b2c8d4e6f1a3c';
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '3f8a2e9b4c6d1f5e7a9b2c8d4e6f1a3w';
-export const JWT_AUTH_EXPIRATION = 60*60*24*7; // 1 week
+export const JWT_AUTH_EXPIRATION = parseInt(process.env.JWT_AUTH_EXPIRATION || '604800'); // 1 week (in seconds)
 
 export const IV_ENCRYPTION_SECRET = process.env.IV_ENCRYPTION_SECRET || '1f2e3d4c5b6a79888796a5b4c3d2e1f0';
 export const REGISTRATION_ENCRYPTION_SECRET = process.env.REGISTRATION_ENCRYPTION_SECRET || '00112233445566778899aabbccddeeff00112233445566778899aabbccddeefe';
