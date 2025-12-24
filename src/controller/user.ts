@@ -6,9 +6,11 @@ import z from 'zod';
 import { successResponse } from '@utils/response';
 import { verifyAdmin, verifyClient } from '@middleware/auth';
 import { ERRORS } from '@utils/error';
+import { UploadService, uploadMiddleware } from '@services/uploadService';
 
 var router = Router();
 const userService = new UserService();
+const uploadService = new UploadService();
 
 const SCHEMA = {
     REGISTER: z.object({
@@ -17,7 +19,6 @@ const SCHEMA = {
         full_name: z.string().min(1),
         phone_number: z.string().min(1),
         national_id: z.string().optional(),
-        photo_url: z.string().optional(),
     }),
 
     ADMIN_REGISTER: z.object({
@@ -26,9 +27,8 @@ const SCHEMA = {
         full_name: z.string().min(1),
         phone_number: z.string().min(1),
         national_id: z.string().optional(),
-        photo_url: z.string().optional(),
     }),
-
+    
     VERIFY_USER: z.object({
         hash: z.string().min(1),
         otp: z.number().min(1)
@@ -58,7 +58,6 @@ const SCHEMA = {
         email_address: z.string().email().max(512).optional(),
         full_name: z.string().min(1).optional(),
         national_id: z.string().optional(),
-        photo_url: z.string().optional(),
     }),
     RESET_PASSWORD: z.object({
         email_address: z.string().email().max(512)
@@ -71,13 +70,24 @@ const SCHEMA = {
 }
 
 router.post('/register',
+    // @ts-ignore
+    uploadMiddleware.single('photo_url'),
     validateRequest({
         body: SCHEMA.REGISTER
     }),
     async function (req: Request, res: Response, next: NextFunction) {
         const body: z.infer<typeof SCHEMA.REGISTER> = req.body
         try {
-            const hash = await userService.createRegisterUserHash(body.email_address, body.full_name, body.phone_number, body.national_id, body.photo_url);
+            let photoUrl: string | undefined = undefined;
+            
+            // If a photo was uploaded, upload it to S3
+            if (req.file) {
+                // Generate a temporary user ID for the filename (will be replaced after user is created)
+                const tempId = Date.now();
+                photoUrl = await uploadService.uploadToS3(req.file, tempId);
+            }
+
+            const hash = await userService.createRegisterUserHash(body.email_address, body.full_name, body.phone_number, body.national_id, photoUrl);
             console.log('User registration hash:', hash);
             // Return the hash to the client for verification    
 
@@ -253,6 +263,8 @@ router.post('/reset_password_verify',
 
 router.put('/',
     verifyClient,
+    // @ts-ignore
+    uploadMiddleware.single('photo_url'),
     validateRequest({
         body: SCHEMA.UPDATE_USER
     }),
@@ -261,8 +273,17 @@ router.put('/',
         try {
             if (!req.userID) {
                 next(ERRORS.AUTH_UNAUTHERISED);
+                return;
             }
-            const user = await userService.updateUser(req.userID!!, body.email_address, body.full_name, body.national_id, body.photo_url);
+            
+            let photoUrl: string | undefined = undefined;
+            
+            // If a photo was uploaded, upload it to S3
+            if (req.file) {
+                photoUrl = await uploadService.uploadToS3(req.file, req.userID);
+            }
+
+            const user = await userService.updateUser(req.userID!!, body.email_address, body.full_name, body.national_id, photoUrl);
             res.send(successResponse({
                 id: user.id,
                 full_name: user.full_name,
