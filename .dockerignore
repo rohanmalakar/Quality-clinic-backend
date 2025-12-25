@@ -3,3 +3,6 @@ npm-debug.log
 .DS_Store
 .env
 .git
+dist
+*.log
+.vscode
