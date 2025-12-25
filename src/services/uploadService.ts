@@ -49,8 +49,8 @@ export class UploadService {
 
     constructor() {
         this.s3 = s3Client;
-        this.allowedMimeTypes = ['image/png', 'image/jpeg'];
-        this.maxSizeInBytes = 50 * 1024 * 1024; // 50MB
+        this.allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        this.maxSizeInBytes = 5 * 1024 * 1024; // 5MB
     }
 
     /**
