@@ -65,14 +65,16 @@ export default class ServiceCartRepository {
 
 
     async getServiceCartsByUser(connection: PoolConnection, userId: number): Promise<ServiceCart[]> {
-    const [cartItems] = await connection.query<ServiceCart[]>(
-                'SELECT * FROM service_cart WHERE user_id = ?',
-                [userId]
-            ); 
-            if (!cartItems || cartItems.length === 0) {
-                return [];
-            }
-        const query =`SELECT
+        const [cartItems] = await connection.query<ServiceCart[]>(
+            'SELECT * FROM service_cart WHERE user_id = ?',
+            [userId]
+        ); 
+        
+        if (!cartItems || cartItems.length === 0) {
+            return [];
+        }
+        
+        const query = `SELECT
                         sc.id,
                         sc.user_id,
                         sc.date,
@@ -96,15 +98,16 @@ export default class ServiceCartRepository {
                         sts.start_time AS time_slot_start,
                         sts.end_time   AS time_slot_end
                     FROM service_cart sc
-                    JOIN service s ON s.id = sc.service_id
-                    JOIN service_category sca ON sca.id = s.category_id
-                    JOIN branch b ON b.id = sc.branch_id
-                    JOIN service_time_slot sts ON sts.id = sc.time_slot_id
+                    LEFT JOIN service s ON s.id = sc.service_id
+                    LEFT JOIN service_category sca ON sca.id = s.category_id
+                    LEFT JOIN branch b ON b.id = sc.branch_id
+                    LEFT JOIN service_time_slot sts ON sts.id = sc.time_slot_id
                     WHERE sc.user_id = ?
                     ORDER BY sc.id DESC`;
 
         const [rows] = await connection.query<ServiceCart[]>(query, [userId]);
-            return rows;
+        console.log("Cart items after JOIN:", rows);
+        return rows;
     }
     /**
      * Retrieves a single service cart item by its primary key ID.

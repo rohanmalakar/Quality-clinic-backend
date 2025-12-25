@@ -92,11 +92,8 @@ router.get('/my-cart',
     verifyClient,
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            console.log("User ID from token:", req.userID);
-            
             // Get cart items with service details
             const userCartItems = await serviceCartService.getServiceCartsByUser(req.userID as number);
-            console.log("User cart from service:", userCartItems);
             
             // Only return the processed cart items with service details
             res.status(200).send(successResponse(userCartItems, "User cart items retrieved successfully"));
@@ -130,17 +127,11 @@ router.post('/update',
 );
 
 // API 4: Delete an item from the service cart by its ID.
-// API 4: Delete an item from the service cart by its ID.
-router.post('/delete',
+router.delete('/delete',
     verifyClient,
     validateRequest({ body: SCHEMA.DELETE_CART_ITEM }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            console.log('Delete request received:');
-            console.log('x-access-token:', req.headers['x-access-token']); 
-            console.log('User ID from token:', req.userID);
-            console.log('Item to delete:', req.body);
-
             const { id } = req.body;
             await serviceCartService.deleteServiceCart(id, req.userID as number);
             

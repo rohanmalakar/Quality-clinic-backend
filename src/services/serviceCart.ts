@@ -2,6 +2,8 @@ import { BookingService } from "@models/bookingService";
 import { ServiceCart } from "@models/serviceCart";
 import BookingServiceRepository from "@repository/bookingService";
 import ServiceCartRepository from "@repository/serviceCart";
+import BranchRepository from "@repository/branch";
+import ServiceRepository from "@repository/service";
 import pool from "@utils/db";
 import { ERRORS, RequestError } from "@utils/error";
 import createLogger from "@utils/logger";
@@ -12,10 +14,14 @@ const logger = createLogger('@serviceCartService');
 export default class ServiceCartService {
     serviceCartRepository: ServiceCartRepository;
     bookingServiceRepository: BookingServiceRepository;
+    branchRepository: BranchRepository;
+    serviceRepository: ServiceRepository;
 
     constructor() {
         this.serviceCartRepository = new ServiceCartRepository();
         this.bookingServiceRepository = new BookingServiceRepository();
+        this.branchRepository = new BranchRepository();
+        this.serviceRepository = new ServiceRepository();
     }
 
     /**
@@ -84,6 +90,24 @@ export default class ServiceCartService {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
+
+            // Validate branch exists
+            const branch = await this.branchRepository.getBranchByIdOrNull(connection, branch_id);
+            if (!branch) {
+                throw ERRORS.BRANCH_NOT_FOUND;
+            }
+
+            // Validate service exists
+            const service = await this.serviceRepository.getServiceByIdOrNull(connection, service_id);
+            if (!service) {
+                throw ERRORS.SERVICE_NOT_FOUND;
+            }
+
+            // Validate time slot exists
+            const timeSlot = await this.serviceRepository.getServiceTimeSlotByIdOrNull(connection, time_slot_id);
+            if (!timeSlot) {
+                throw ERRORS.SERVICE_TIME_SLOT_NOT_FOUND;
+            }
 
             // Check if this exact item is already in the cart
             const [existingRows] = await connection.query<any[]>(

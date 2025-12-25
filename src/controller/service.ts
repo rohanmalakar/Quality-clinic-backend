@@ -121,6 +121,7 @@ router.post('/',
         }
     }
 )
+
 // Get all services for a category
 router.get('/all/category',
     validateRequest({
@@ -138,6 +139,7 @@ router.get('/all/category',
         }
     }
 )
+
 
 router.get('/category',
     async function (req: Request, res: Response, next: NextFunction) {
@@ -312,7 +314,7 @@ router.get('/featured',
         } catch (e) {
             next(e)
         }
-    })
+})
 
 router.post('/branches',
     verifyAdmin,

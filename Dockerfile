@@ -1,14 +1,13 @@
-FROM node:23
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN yarn install
-
-# Install nodemon globally for automatic reloads
-RUN yarn add nodemon
+RUN yarn install --production
 
 COPY . .
 
 EXPOSE 3001
+
+CMD ["node", "index.js"]
