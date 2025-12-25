@@ -144,7 +144,7 @@ export default class ServiceCartRepository {
         branch_id: number,
         service_id: number,
         time_slot_id: number,
-        date: Date,
+        date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
         const [result] = await connection.query<ResultSetHeader>(
@@ -193,7 +193,7 @@ export default class ServiceCartRepository {
         branch_id: number,
         service_id: number,
         time_slot_id: number,
-        date: Date,
+        date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
         const [result] = await connection.query<ResultSetHeader>(

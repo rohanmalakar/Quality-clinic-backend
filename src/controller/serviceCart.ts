@@ -51,7 +51,7 @@ router.post('/check',
                 body.branch_id,
                 body.service_id,
                 body.time_slot_id,
-                new Date(body.date)
+                body.date
             );
             res.status(200).send(successResponse(
                 { exists, message: exists ? "Item already in cart" : "Item not in cart" },
@@ -75,7 +75,7 @@ router.post('/add',
                 body.branch_id,
                 body.service_id,
                 body.time_slot_id,
-                new Date(body.date),
+                body.date,
                 body.vat_percentage
             );
             res.status(201).send(successResponse(newCartItem, "Item added to cart successfully"));
@@ -146,7 +146,7 @@ router.post('/update',
                 body.branch_id,
                 body.service_id,
                 body.time_slot_id,
-                new Date(body.date),
+                body.date,
                 body.vat_percentage
             );
             res.status(200).send(successResponse(updatedCartItem, "Cart item updated successfully"));

@@ -84,7 +84,7 @@ export default class ServiceCartService {
         branch_id: number,
         service_id: number,
         time_slot_id: number,
-        date: Date,
+        date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
         let connection: PoolConnection | null = null;
@@ -151,7 +151,7 @@ export default class ServiceCartService {
         branch_id: number,
         service_id: number,
         time_slot_id: number,
-        date: Date
+        date: string
     ): Promise<boolean> {
         let connection: PoolConnection | null = null;
         try {
@@ -232,7 +232,7 @@ export default class ServiceCartService {
         branch_id: number,
         service_id: number,
         time_slot_id: number,
-        date: Date,
+        date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
         let connection: PoolConnection | null = null;
