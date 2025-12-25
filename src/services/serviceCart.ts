@@ -144,6 +144,41 @@ export default class ServiceCartService {
     }
 
     /**
+     * Check if a cart item already exists for the user
+     */
+    async checkCartItemExists(
+        user_id: number,
+        branch_id: number,
+        service_id: number,
+        time_slot_id: number,
+        date: Date
+    ): Promise<boolean> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+
+            const [existingRows] = await connection.query<any[]>(
+                `SELECT id FROM service_cart 
+                 WHERE user_id = ? AND branch_id = ? AND service_id = ? AND date = ? AND time_slot_id = ?`,
+                [user_id, branch_id, service_id, date, time_slot_id]
+            );
+
+            return existingRows.length > 0;
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            } else {
+                logger.error(e);
+                throw ERRORS.INTERNAL_SERVER_ERROR;
+            }
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
+
+    /**
      * Corresponds to the API for getting all user carts with details.
      */
     async getAllServiceCartsWithDetails(): Promise<ServiceCart[]> {
