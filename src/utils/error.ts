@@ -55,7 +55,7 @@ export const ERRORS = {
     INTERNAL_SERVER_ERROR: new RequestError("Internal server error", 10008, 500),
     ADMIN_ONLY_ROUTE: new RequestError("Only admin is allowed to access this route", 10009, 403),
     FILE_NOT_FOUND: new RequestError("File not found", 10010, 400),
-    INVALID_FILE_TYPE: new RequestError("Invalid file type. Only PNG and JPEG are allowed", 10011, 400),
+    INVALID_FILE_TYPE: new RequestError("Invalid file type. Only PNG, JPEG and JPG are allowed", 10011, 400),
     INVALID_PARAMS: new RequestError("Invalid params", 10012, 400),
 
     EMAIL_ALREADY_EXISTS: new RequestError("Email already exists", 20001, 400),

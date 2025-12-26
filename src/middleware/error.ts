@@ -9,18 +9,12 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
     if (err instanceof RequestError) {
         res.status(err.statusCode).send({
             success: false,
-            error: {
-                code: err.code,
-                message: err.message
-            }
+            message: err.message
         })
     } else {
         res.status(ERRORS.UNHANDLED_ERROR.statusCode).send({
             success: false,
-            error: {
-                code: ERRORS.UNHANDLED_ERROR.code,
-                message: ERRORS.UNHANDLED_ERROR.message
-            }
+            message: ERRORS.UNHANDLED_ERROR.message
         })
     }
 }

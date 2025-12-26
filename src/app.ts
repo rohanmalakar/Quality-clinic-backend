@@ -112,13 +112,13 @@ app.use(cors({
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({
-        error: true,
+        success: false,
         message: 'File size exceeds limit.',
       });
     }
     console.error('Unhandled error middleware:', err);
     res.status(500).json({
-      error: true,
+      success: false,
       message: err.message || 'Internal Server Error',
     });
   });

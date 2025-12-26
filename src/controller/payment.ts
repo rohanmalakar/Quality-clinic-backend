@@ -85,7 +85,7 @@ router.post(
             res.status(200).json(result);
         } catch (err: any) {
             console.log(err.message);
-            res.status(400).json({ error: true, message: err.message });
+            res.status(400).json({ success: false, message: err.message });
         } finally {
             connection.release();
         }
