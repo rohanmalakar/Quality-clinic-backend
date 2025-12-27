@@ -217,6 +217,77 @@ export default class DoctorService {
         }
     }
 
+    async getDoctorWeeklyAvailability(doctor_id: number, branch_id: number): Promise<Array<{date: string, day: string, isAvailable: boolean}>> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            
+            // Get doctor and branch info
+            const doctor = await this.doctorRepository.getDoctorByIdOrNull(connection, doctor_id);
+            const branch = await this.branchRepository.getBranchByIdOrNull(connection, branch_id);
+            
+            if (!doctor) {
+                throw ERRORS.DOCTOR_NOT_FOUND;
+            }
+            if (!branch) {
+                throw ERRORS.BRANCH_NOT_FOUND;
+            }
+
+            // Get doctor branch mapping
+            const doctorBranch = await this.doctorRepository.getActiveDoctorBranchOrNull(connection, doctor_id, branch_id);
+            
+            if (!doctorBranch) {
+                throw new Error('Doctor is not assigned to this branch');
+            }
+
+            const dayMap = String(doctorBranch.day_map); // Convert to string e.g., "0101010"
+            const availability: Array<{date: string, day: string, isAvailable: boolean}> = [];
+            
+            // Get next 7 days starting from today
+            const today = new Date();
+            const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            for (let i = 0; i < 7; i++) {
+                const currentDate = new Date(today);
+                currentDate.setDate(today.getDate() + i);
+                
+                // Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+                // Convert to our format (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
+                let dayOfWeek = currentDate.getDay();
+                dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday from 0 to 6
+                
+                // Check availability from day_map
+                const isAvailable = dayMap[dayOfWeek] === '1';
+                
+                // Format date
+                const dateStr = currentDate.toLocaleDateString('en-US', { 
+                    day: 'numeric', 
+                    month: 'short',
+                    year: 'numeric'
+                });
+                
+                availability.push({
+                    date: dateStr,
+                    day: daysOfWeek[dayOfWeek],
+                    isAvailable: isAvailable
+                });
+            }
+            
+            return availability;
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            } else {
+                logger.error(e);
+                throw ERRORS.INTERNAL_SERVER_ERROR;
+            }
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
+
     validateDayMap(day_map: string) {
         if (day_map.length !== 7) {
             throw ERRORS.INVALID_DAY_MAPPING;

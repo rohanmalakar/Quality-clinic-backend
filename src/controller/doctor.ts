@@ -94,6 +94,10 @@ const SCHEMA = {
     }),
     GET_DOCTORS_BY_SPECIALITY: z.object({
         speciality: z.enum(['DENTIST', 'DERMATOLOGIST'])
+    }),
+    GET_DOCTOR_WEEKLY_AVAILABILITY: z.object({
+        doctor_id: z.string(),
+        branch_id: z.string()
     })
 }
 
@@ -153,6 +157,23 @@ router.get('/branch/:branch_id',
             const branch_id = parseInt(req.params.branch_id);
             const doctors = await doctorService.getDoctorForABranch(branch_id);
             res.json(successResponse(doctors));
+        } catch (e) {
+            next(e);
+        }
+    }
+)
+
+// Get doctor weekly availability
+router.get('/availability/weekly',
+    validateRequest({
+        query: SCHEMA.GET_DOCTOR_WEEKLY_AVAILABILITY
+    }),
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            const doctor_id = parseInt(req.query.doctor_id as string);
+            const branch_id = parseInt(req.query.branch_id as string);
+            const availability = await doctorService.getDoctorWeeklyAvailability(doctor_id, branch_id);
+            res.json(successResponse(availability));
         } catch (e) {
             next(e);
         }
