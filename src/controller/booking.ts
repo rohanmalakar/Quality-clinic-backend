@@ -71,6 +71,9 @@ const SCHEMA = {
         booking_id: z.number(),
         time_slot_id: z.number(),
         date: z.string().date()
+    }),
+    GET_BOOKINGS_BY_BRANCH: z.object({
+        branch_id: z.string()
     })
 }
 
@@ -373,5 +376,51 @@ router.get('/:id/service',
         }
     }
 )
+
+// Get upcoming bookings by branch and user
+router.get('/user/upcoming',
+    verifyClient,
+    validateRequest({
+        query: SCHEMA.GET_BOOKINGS_BY_BRANCH
+    }),
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.userID) {
+                next(ERRORS.AUTH_UNAUTHERISED);
+                return;
+            }
+            const branch_id = parseInt(req.query.branch_id as string);
+            const bookings = await bookingService.getUpcomingBookings(branch_id, req.userID);
+            res.send(successResponse(bookings));
+        }
+        catch (e) {
+            next(e)
+        }
+    }
+)
+
+// Get completed bookings by branch and user
+router.get('/user/completed',
+    verifyClient,
+    validateRequest({
+        query: SCHEMA.GET_BOOKINGS_BY_BRANCH
+    }),
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.userID) {
+                next(ERRORS.AUTH_UNAUTHERISED);
+                return;
+            }
+            const branch_id = parseInt(req.query.branch_id as string);
+            const bookings = await bookingService.getCompletedBookings(branch_id, req.userID);
+            res.send(successResponse(bookings));
+        }
+        catch (e) {
+            next(e)
+        }
+    }
+)
+
+
 
 export default router;
