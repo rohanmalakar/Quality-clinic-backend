@@ -15,6 +15,8 @@ CREATE TABLE doctor (
     name_en VARCHAR(1024) NOT NULL,
     name_ar VARCHAR(1024) NOT NULL,
     photo_url TEXT,
+    location VARCHAR(255),
+    speciality ENUM('DENTIST', 'DERMATOLOGIST') NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
 );
 `
@@ -33,6 +35,8 @@ export interface Doctor  {
     name_en: string;
     name_ar: string;
     photo_url: string;
+    location: string;
+    speciality: 'DENTIST' | 'DERMATOLOGIST';
     is_active: boolean;
 }
 

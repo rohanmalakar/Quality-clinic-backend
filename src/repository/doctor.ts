@@ -22,6 +22,16 @@ export default class DoctorRepository {
         }
     }
 
+    async getDoctorsBySpeciality(conn: PoolConnection, speciality: 'DENTIST' | 'DERMATOLOGIST'): Promise<Doctor[]> {
+        try {
+            const [rows] = await conn.query<DoctorRow[]>('SELECT * FROM doctor WHERE speciality = ? AND is_active = 1', [speciality]);
+            return rows;
+        } catch (e) {
+            logger.error(e);
+            throw e;
+        }
+    }
+
     async getDoctorBranchInfo(conn: PoolConnection, doctorId: number): Promise<Branch[]> {
         try {
             const [rows] = await conn.query<BranchRow[]>('SELECT b.* FROM doctor_branch JOIN branch as b where doctor_branch.branch_id = b.id and doctor_id = ?', [doctorId]);
@@ -119,6 +129,8 @@ export default class DoctorRepository {
         qualification: string,
         session_fees: number,
         total_experience: number,
+        location: string,
+        speciality: 'DENTIST' | 'DERMATOLOGIST',
         is_active: boolean
     ): Promise<Doctor> {
         try {
@@ -133,9 +145,9 @@ export default class DoctorRepository {
             }
 
             const [result] = await conn.query<ResultSetHeader>(
-                `INSERT INTO doctor (about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, is_active]
+                `INSERT INTO doctor (about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, location, speciality, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, location, speciality, is_active]
             );
 
             const doctor = await this.getDoctorById(conn, result.insertId);
@@ -375,9 +387,9 @@ export default class DoctorRepository {
         }
     }
 
-    async updateDoctor(conn: PoolConnection, doctorId: number, about_ar: string, about_en: string, attended_patient: number, languages: string, name_ar: string, name_en: string, photo_url: string, qualification: string, session_fees: number, total_experience: number, is_active: boolean): Promise<Doctor> {
+    async updateDoctor(conn: PoolConnection, doctorId: number, about_ar: string, about_en: string, attended_patient: number, languages: string, name_ar: string, name_en: string, photo_url: string, qualification: string, session_fees: number, total_experience: number, location: string, speciality: 'DENTIST' | 'DERMATOLOGIST', is_active: boolean): Promise<Doctor> {
         try {
-            await conn.query('UPDATE doctor SET about_ar = ?, about_en = ?, attended_patient = ?, languages = ?, name_ar = ?, name_en = ?, photo_url = ?, qualification = ?, session_fees = ?, total_experience = ?, is_active = ? WHERE id = ?', [about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, is_active, doctorId]);
+            await conn.query('UPDATE doctor SET about_ar = ?, about_en = ?, attended_patient = ?, languages = ?, name_ar = ?, name_en = ?, photo_url = ?, qualification = ?, session_fees = ?, total_experience = ?, location = ?, speciality = ?, is_active = ? WHERE id = ?', [about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, location, speciality, is_active, doctorId]);
             const doctor = await this.getDoctorById(conn, doctorId);
             return doctor;
         } catch (e) {

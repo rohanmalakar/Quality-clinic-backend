@@ -36,6 +36,8 @@ const SCHEMA = {
         name_en: z.string(),
         name_ar: z.string(),
         photo_url: z.string(),
+        location: z.string(),
+        speciality: z.enum(['DENTIST', 'DERMATOLOGIST']),
         is_active: z.boolean().optional()
     }),
     UPDATE_DOCTOR: z.object({
@@ -49,6 +51,8 @@ const SCHEMA = {
         name_en: z.string().optional(),
         name_ar: z.string().optional(),
         photo_url: z.string().optional(),
+        location: z.string().optional(),
+        speciality: z.enum(['DENTIST', 'DERMATOLOGIST']).optional(),
         is_active: z.boolean().optional()
     }),
     ADD_DOCTOR_TO_BRANCHES: z.object({
@@ -87,6 +91,9 @@ const SCHEMA = {
     }),
     GET_ALL_TIME_SLOT: z.object({
         doctor_id: z.string(),
+    }),
+    GET_DOCTORS_BY_SPECIALITY: z.object({
+        speciality: z.enum(['DENTIST', 'DERMATOLOGIST'])
     })
 }
 
@@ -96,6 +103,22 @@ router.get('/',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             const doctors = await doctorService.getAllDoctors();
+            res.json(successResponse(doctors));
+        } catch (e) {
+            next(e);
+        }
+    }
+)
+
+// GET doctors by speciality
+router.get('/speciality/:speciality',
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            const speciality = req.params.speciality.toUpperCase() as 'DENTIST' | 'DERMATOLOGIST';
+            if (speciality !== 'DENTIST' && speciality !== 'DERMATOLOGIST') {
+                return res.status(400).json({ success: false, message: 'Invalid speciality. Must be DENTIST or DERMATOLOGIST' });
+            }
+            const doctors = await doctorService.getDoctorsBySpeciality(speciality);
             res.json(successResponse(doctors));
         } catch (e) {
             next(e);
@@ -114,7 +137,8 @@ router.post('/',
             if (body.is_active === undefined) {
                 body.is_active = true;
             }
-            const doctor = await doctorService.createDoctor(body.about_ar, body.about_en, body.attended_patient, body.languages, body.name_ar, body.name_en, body.photo_url, body.qualification, body.session_fees, body.total_experience, body.is_active);
+    
+            const doctor = await doctorService.createDoctor(body.about_ar, body.about_en, body.attended_patient, body.languages, body.name_ar, body.name_en, body.photo_url, body.qualification, body.session_fees, body.total_experience, body.location, body.speciality, body.is_active);
             res.json(successResponse(doctor));
         } catch (e) {
             next(e);
@@ -356,7 +380,7 @@ router.put('/:id',
         try {
             const body: z.infer<typeof SCHEMA.UPDATE_DOCTOR> = req.body
             const doctor_id = parseInt(req.params.id);
-            const doctor = await doctorService.updateDoctor(doctor_id, body.about_ar, body.about_en, body.attended_patient, body.languages, body.name_ar, body.name_en, body.photo_url, body.qualification, body.session_fees, body.total_experience, body.is_active);
+            const doctor = await doctorService.updateDoctor(doctor_id, body.about_ar, body.about_en, body.attended_patient, body.languages, body.name_ar, body.name_en, body.photo_url, body.qualification, body.session_fees, body.total_experience, body.location, body.speciality, body.is_active);
             res.json(successResponse(doctor));
         } catch (e) {
             next(e);

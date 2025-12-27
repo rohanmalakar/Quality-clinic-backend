@@ -81,6 +81,25 @@ export default class DoctorService {
         }
     }
 
+    async getDoctorsBySpeciality(speciality: 'DENTIST' | 'DERMATOLOGIST'): Promise<Doctor[]> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            return await this.doctorRepository.getDoctorsBySpeciality(connection, speciality);
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            } else {
+                logger.error(e);
+                throw ERRORS.INTERNAL_SERVER_ERROR;
+            }
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
+
     async getDoctorBranchInfo(doctor_id: number): Promise<Branch[]> {
         let connection: PoolConnection | null = null;
         try {
@@ -101,11 +120,11 @@ export default class DoctorService {
         }
     }
 
-    async createDoctor(about_ar: string, about_en: string, attended_patient: number, languages: string, name_ar: string, name_en: string, photo_url: string, qualification: string, session_fees: number, total_experience: number, is_active: boolean): Promise<Doctor> {
+    async createDoctor(about_ar: string, about_en: string, attended_patient: number, languages: string, name_ar: string, name_en: string, photo_url: string, qualification: string, session_fees: number, total_experience: number, location: string, speciality: 'DENTIST' | 'DERMATOLOGIST', is_active: boolean): Promise<Doctor> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
-            return this.doctorRepository.createDoctor(connection, about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, is_active);
+            return this.doctorRepository.createDoctor(connection, about_ar, about_en, attended_patient, languages, name_ar, name_en, photo_url, qualification, session_fees, total_experience, location, speciality, is_active);
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;
@@ -534,7 +553,7 @@ export default class DoctorService {
         }
     }
 
-    async updateDoctor(doctor_id: number, about_ar: string | undefined, about_en: string | undefined, attended_patient: number | undefined, languages: string | undefined, name_ar: string | undefined, name_en: string | undefined, photo_url: string | undefined, qualification: string | undefined, session_fees: number | undefined, total_experience: number | undefined, is_active: boolean | undefined): Promise<Doctor> {
+    async updateDoctor(doctor_id: number, about_ar: string | undefined, about_en: string | undefined, attended_patient: number | undefined, languages: string | undefined, name_ar: string | undefined, name_en: string | undefined, photo_url: string | undefined, qualification: string | undefined, session_fees: number | undefined, total_experience: number | undefined, location: string | undefined, speciality: 'DENTIST' | 'DERMATOLOGIST' | undefined, is_active: boolean | undefined): Promise<Doctor> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
@@ -572,10 +591,16 @@ export default class DoctorService {
             if (total_experience) {
                 doctor.total_experience = total_experience;
             }
+            if (location) {
+                doctor.location = location;
+            }
+            if (speciality) {
+                doctor.speciality = speciality;
+            }
             if (is_active != undefined) {
                 doctor.is_active = is_active;
             }
-            return await this.doctorRepository.updateDoctor(connection, doctor_id, doctor.about_ar, doctor.about_en, doctor.attended_patient, doctor.languages, doctor.name_ar, doctor.name_en, doctor.photo_url, doctor.qualification, doctor.session_fees, doctor.total_experience, doctor.is_active);
+            return await this.doctorRepository.updateDoctor(connection, doctor_id, doctor.about_ar, doctor.about_en, doctor.attended_patient, doctor.languages, doctor.name_ar, doctor.name_en, doctor.photo_url, doctor.qualification, doctor.session_fees, doctor.total_experience, doctor.location, doctor.speciality, doctor.is_active);
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;
