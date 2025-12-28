@@ -7,17 +7,7 @@ import { date, z } from "zod";
 import validateRequest from "@middleware/validaterequest";
 import BookingService from '@services/booking';
 import { successResponse } from "@utils/response";
-
-import Redis from 'ioredis';
-const redis = new Redis({
-  host: '127.0.0.1',
-  port: 6379,
-  maxRetriesPerRequest: 0,
-  retryStrategy: () => null,
-  lazyConnect: true,
-  showFriendlyErrorStack: false
-});
-redis.on('error', () => {});
+import redisClient from "@utils/redis";
 
 var router = Router();
 

@@ -9,17 +9,7 @@ import validateRequest from "@middleware/validaterequest";
 import DoctorService from '@services/doctor';
 import { successResponse } from "@utils/response";
 import { start } from "repl";
-
-import Redis from 'ioredis';
-const redis = new Redis({
-  host: '127.0.0.1',
-  port: 6379,
-  maxRetriesPerRequest: 0,
-  retryStrategy: () => null,
-  lazyConnect: true,
-  showFriendlyErrorStack: false
-});
-redis.on('error', () => {});
+import redisClient from "@utils/redis";
 
 const doctorService = new DoctorService();
 var router = Router();

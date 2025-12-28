@@ -6,19 +6,9 @@ import DoctorRepository from "@repository/doctor";
 import pool from "@utils/db";
 import { ERRORS, RequestError } from "@utils/error";
 import createLogger from "@utils/logger";
+import redisClient from "@utils/redis";
 
 import { PoolConnection } from "mysql2/promise";
-
-import Redis from 'ioredis';
-const redis = new Redis({
-  host: '127.0.0.1',
-  port: 6379,
-  maxRetriesPerRequest: 0,
-  retryStrategy: () => null,
-  lazyConnect: true,
-  showFriendlyErrorStack: false
-});
-redis.on('error', () => {});
 
 const logger = createLogger('@doctorService');
 
@@ -511,7 +501,7 @@ export default class DoctorService {
 
             for (const slot of doctor_time_slot) {
                 const lockKey = `lock:doctor:${doctor_id}:slot:${slot.id}:date:${date}`;
-                const isLocked = await redis.get(lockKey);
+                const isLocked = await redisClient.get(lockKey);
                 if (!isLocked) {
                     availableSlots.push({
                         id: slot.id,

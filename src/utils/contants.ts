@@ -33,3 +33,10 @@ export const MYSQL_DB_CONFIG_NEW = {
     'database': process.env.DB_NAME || 'qualitycare_db',
     'connection_limit':100
 }
+
+// Redis Configuration
+export const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+export const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379');
+export const REDIS_USERNAME = process.env.REDIS_USERNAME || 'default';
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || '';
+export const REDIS_TLS = process.env.REDIS_TLS === 'true';

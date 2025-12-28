@@ -10,21 +10,11 @@ import VatRepository from "@repository/vat";
 import pool from "@utils/db";
 import { ERRORS, RequestError } from "@utils/error";
 import createLogger from "@utils/logger";
+import redisClient from "@utils/redis";
 
 import { PoolConnection } from "mysql2/promise";
 
 const logger = createLogger('@bookingService');
-
-import Redis from 'ioredis';
-const redis = new Redis({
-  host: '127.0.0.1',
-  port: 6379,
-  maxRetriesPerRequest: 0,
-  retryStrategy: () => null,
-  lazyConnect: true,
-  showFriendlyErrorStack: false
-});
-redis.on('error', () => {});
 
 export default class BookingService {
     bookingRepository: BookingRepository;
@@ -53,15 +43,14 @@ export default class BookingService {
         try {
 
             // Check if slot is already locked
-            const existingLock = await redis.get(lockKey);
+            const existingLock = await redisClient.get(lockKey);
             if (existingLock) {
                 throw ERRORS.DOCTOR_ALREADY_BOOKED_FOR_THIS_SLOT;
             }
 
             // Lock the slot temporarily
             const lockValue = JSON.stringify({ user_id, timestamp: Date.now() });
-            // const lockSet = await redis.set(lockKey, lockValue, 'NX', 'EX', lockTTL);
-            const lockSet = await redis.set(lockKey, lockValue, 'EX', lockTTL, 'NX');
+            const lockSet = await redisClient.set(lockKey, lockValue, { EX: lockTTL, NX: true });
 
             if (lockSet !== 'OK') {
                 throw ERRORS.DOCTOR_ALREADY_BOOKED_FOR_THIS_SLOT;
@@ -94,7 +83,7 @@ export default class BookingService {
             return booking;
         } catch (e) {
             // Optional: release lock on error
-            await redis.del(lockKey);
+            await redisClient.del(lockKey);
             if (e instanceof RequestError) {
                 throw e;
             }
