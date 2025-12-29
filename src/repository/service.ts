@@ -207,10 +207,19 @@ export default class ServiceRepository {
         }
     }
 
-    async getAllServicesByCategory(connection: PoolConnection, category_id: number): Promise<Service[]> {
+    async getAllServicesByCategory(connection: PoolConnection, category_id: number, branch_id?: number): Promise<Service[]> {
+        console.log(category_id,branch_id);
         try {
-            const [services,] = await connection.query<ServiceRow[]>('SELECT * from service WHERE category_id = ?', [category_id]);
-            return services;
+            if (!branch_id || branch_id === 0) {
+                const [services,] = await connection.query<ServiceRow[]>('SELECT * from service WHERE category_id = ?', [category_id]);
+                return services;
+            } else {
+                const [services,] = await connection.query<ServiceRow[]>(
+                    'SELECT DISTINCT s.* FROM service s INNER JOIN service_branch sb ON s.id = sb.service_id WHERE s.category_id = ? AND sb.branch_id = ?',
+                    [category_id, branch_id]
+                );
+                return services;
+            }
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;

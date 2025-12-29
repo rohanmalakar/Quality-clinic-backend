@@ -141,7 +141,7 @@ export default class SettingService {
         }
     }
 
-    async getAllByCategory( category_id: number): Promise<ServiceView[]> {
+    async getAllByCategory( category_id: number, branch_id?: number): Promise<ServiceView[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
@@ -149,7 +149,7 @@ export default class SettingService {
             if (!serviceCategory) {
                 throw ERRORS.INVALID_SERVICE_CATEGORY;
             }
-            const services = await this.serviceRepository.getAllServicesByCategory(connection, category_id);
+            const services = await this.serviceRepository.getAllServicesByCategory(connection, category_id, branch_id);
             const serviceViews: ServiceView[] = []
             for (let i = 0; i < services.length; i++) {
                 const service = services[i];

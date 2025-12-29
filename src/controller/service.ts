@@ -131,13 +131,15 @@ router.post('/',
 router.get('/all/category',
     validateRequest({
         query: z.object({
-            category_id: z.coerce.number().min(1)
+            category_id: z.coerce.number().min(1),
+            branch_id: z.coerce.number().optional()
         })
     }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             const category_id = parseInt(req.query.category_id as string);
-            const services = await serviceService.getAllByCategory(category_id);
+            const { branch_id } = req.query as { branch_id?: number };
+            const services = await serviceService.getAllByCategory(category_id, branch_id);
             res.json(successResponse(services));
         } catch (error) {
             next(error);
