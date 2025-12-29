@@ -557,9 +557,9 @@ export default class BookingService {
         try {
             connection = await pool.getConnection();
             const doctorBookings = await this.bookingRepository.getFutureDoctorBookings(connection, branch_id, user_id);
-
             return doctorBookings;
         } catch (e) {
+            logger.error('Error in getUpcomingBookings:', e);
             if (e instanceof RequestError) {
                 throw e;
             }
@@ -571,13 +571,15 @@ export default class BookingService {
         }
     }
 
-    async getCompletedBookings(branch_id: number, user_id: number): Promise<BookingDoctorDetails[]> {
+    async getCompletedBookings(branch_id: number, user_id: number): Promise<any[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
             const doctorBookings = await this.bookingRepository.getPastDoctorBookings(connection, branch_id, user_id);
+        
             return doctorBookings;
         } catch (e) {
+            logger.error('Error in getCompletedBookings:', e);
             if (e instanceof RequestError) {
                 throw e;
             }

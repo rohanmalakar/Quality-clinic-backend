@@ -73,6 +73,8 @@ export default class BookingRepository {
         vat: string
     ): Promise<BookingDoctor> {
         try {
+            console.log("book doctor ==============>", doctor_id, date);
+
             // Check for existing booking with the same doctor, time slot, date, and branch
             const [rows] = await connection.query<any[]>(
                 `SELECT id FROM booking_doctor 
@@ -813,12 +815,11 @@ export default class BookingRepository {
                 WHERE 
                     bd.branch_id = ? 
                     AND bd.user_id = ? 
-                    AND DATE(bd.date) >= UTC_DATE()
-                ORDER BY bd.date ASC, dts.start_time ASC
+                    AND bd.date >= UTC_DATE()
             `, [branch_id, user_id]);
             return result;
         } catch (e) {
-            logger.error(e)
+            logger.error('Error in getFutureDoctorBookings:', e)
             throw ERRORS.DATABASE_ERROR
         }
     }
@@ -862,119 +863,13 @@ export default class BookingRepository {
                 WHERE 
                     bd.branch_id = ? 
                     AND bd.user_id = ? 
-                    AND DATE(bd.date) >= UTC_DATE()
-                ORDER BY bd.date ASC, dts.start_time ASC
+                    AND bd.date < UTC_DATE()
             `, [branch_id, user_id]);
         return result;
     } catch (e) {
-        logger.error(e)
+        logger.error('Error in getPastDoctorBookings:', e)
         throw ERRORS.DATABASE_ERROR
     }
-}
-
-    async getFutureServiceBookings(
-        connection: PoolConnection,
-        branch_id: number,
-        user_id: number
-    ): Promise<BookingServiceDetails[]> {
-        try {
-            const [result] = await connection.query<BookingServiceDetailsRow[]>(`
-                SELECT
-                    bs.id AS id,
-                    bs.user_id AS user_id,
-                    u.full_name AS user_full_name,
-                    u.email_address AS user_email,
-                    bs.branch_id AS branch_id,
-                    b.name_en AS branch_name_en,
-                    b.name_ar AS branch_name_ar,
-                    bs.service_id AS service_id,
-                    s.actual_price AS service_actual_price,
-                    bs.vat_percentage AS vat_percentage,
-                    s.discounted_price AS service_discounted_price,
-                    s.name_en AS service_name_en,
-                    s.name_ar AS service_name_ar,
-                    s.category_id AS service_category_id,
-                    sc.type AS service_category_type,
-                    sc.name_en AS service_category_name_en,
-                    sc.name_ar AS service_category_name_ar,
-                    bs.time_slot_id AS time_slot_id,
-                    ts.start_time AS time_slot_start_time,
-                    ts.end_time AS time_slot_end_time,
-                    bs.date AS booking_date,
-                    bs.status AS booking_status
-                FROM
-                    booking_service bs
-                LEFT JOIN
-                    user u ON bs.user_id = u.id
-                LEFT JOIN
-                    branch b ON bs.branch_id = b.id
-                LEFT JOIN
-                    service s ON bs.service_id = s.id
-                LEFT JOIN
-                    service_category sc ON s.category_id = sc.id
-                LEFT JOIN
-                    service_time_slot ts ON bs.time_slot_id = ts.id
-                WHERE 
-                    bs.branch_id = ? AND bs.user_id = ? AND DATE(bs.date) >= CURDATE()
-                ORDER BY bs.date ASC, ts.start_time ASC
-            `, [branch_id, user_id]);
-            return result;
-        } catch (e) {
-            logger.error(e)
-            throw ERRORS.DATABASE_ERROR
-        }
     }
 
-    async getPastServiceBookings(
-        connection: PoolConnection,
-        branch_id: number,
-        user_id: number
-    ): Promise<BookingServiceDetails[]> {
-        try {
-            const [result] = await connection.query<BookingServiceDetailsRow[]>(`
-                SELECT
-                    bs.id AS id,
-                    bs.user_id AS user_id,
-                    u.full_name AS user_full_name,
-                    u.email_address AS user_email,
-                    bs.branch_id AS branch_id,
-                    b.name_en AS branch_name_en,
-                    b.name_ar AS branch_name_ar,
-                    bs.service_id AS service_id,
-                    s.actual_price AS service_actual_price,
-                    bs.vat_percentage AS vat_percentage,
-                    s.discounted_price AS service_discounted_price,
-                    s.name_en AS service_name_en,
-                    s.name_ar AS service_name_ar,
-                    s.category_id AS service_category_id,
-                    sc.type AS service_category_type,
-                    sc.name_en AS service_category_name_en,
-                    sc.name_ar AS service_category_name_ar,
-                    bs.time_slot_id AS time_slot_id,
-                    ts.start_time AS time_slot_start_time,
-                    ts.end_time AS time_slot_end_time,
-                    bs.date AS booking_date,
-                    bs.status AS booking_status
-                FROM
-                    booking_service bs
-                LEFT JOIN
-                    user u ON bs.user_id = u.id
-                LEFT JOIN
-                    branch b ON bs.branch_id = b.id
-                LEFT JOIN
-                    service s ON bs.service_id = s.id
-                LEFT JOIN
-                    service_category sc ON s.category_id = sc.id
-                LEFT JOIN
-                    service_time_slot ts ON bs.time_slot_id = ts.id
-                WHERE 
-                    bs.branch_id = ? AND bs.user_id = ? AND DATE(bs.date) < CURDATE()
-                ORDER BY bs.date DESC, ts.start_time DESC
-            `, [branch_id, user_id]);
-            return result;
-        } catch (e) {
-            logger.error(e)
-            throw ERRORS.DATABASE_ERROR
-        }
-    }
 }
