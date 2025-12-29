@@ -12,10 +12,20 @@ interface DoctorTimeSlotRow extends DoctorTimeSlot, RowDataPacket  {}
 
 export default class DoctorRepository {
 
-    async getAllDoctors(conn: PoolConnection): Promise<Doctor[]> {
+    async getAllDoctors(conn: PoolConnection, branch_id?: number): Promise<Doctor[]> {
         try {
-            const [rows] = await conn.query<DoctorRow[]>('SELECT * FROM doctor');
-            return rows;
+            if (!branch_id || branch_id === 0) {
+                const [rows] = await conn.query<DoctorRow[]>('SELECT * FROM doctor');
+                return rows;
+            } else {
+                const [rows] = await conn.query<DoctorRow[]>(
+                    `SELECT DISTINCT d.* FROM doctor d
+                    JOIN doctor_branch db ON d.id = db.doctor_id
+                    WHERE db.branch_id = ?`,
+                    [branch_id]
+                );
+                return rows;
+            }
         } catch (e) {
             logger.error(e);
             throw e;
@@ -377,10 +387,25 @@ export default class DoctorRepository {
         }
     }
 
-    async getFeaturedDoctors(conn: PoolConnection): Promise<Doctor[]> {
+    async getFeaturedDoctors(conn: PoolConnection, branch_id?: number): Promise<Doctor[]> {
         try {
-            const [rows] = await conn.query<DoctorRow[]>('SELECT * FROM doctor order by attended_patient desc limit 5');
-            return rows;
+            if (!branch_id || branch_id === 0) {
+                // Show all featured doctors from all branches
+                const [rows] = await conn.query<DoctorRow[]>('SELECT * FROM doctor WHERE is_active = 1 ORDER BY attended_patient DESC LIMIT 5');
+                return rows;
+            } else {
+                // Show featured doctors only from the specified branch
+                const [rows] = await conn.query<DoctorRow[]>(
+                    `SELECT DISTINCT d.* 
+                    FROM doctor d 
+                    INNER JOIN doctor_branch db ON d.id = db.doctor_id 
+                    WHERE db.branch_id = ? AND d.is_active = 1 AND db.is_active = 1
+                    ORDER BY d.attended_patient DESC 
+                    LIMIT 5`,
+                    [branch_id]
+                );
+                return rows;
+            }
         } catch (e) {
             logger.error(e);
             throw e;

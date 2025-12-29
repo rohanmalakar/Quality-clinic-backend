@@ -23,11 +23,11 @@ export default class SettingService {
         this.bookingRepository = new BookingRepository();
     }
 
-    async getAll(): Promise<ServiceView[]> {
+    async getAll(branch_id?: number): Promise<ServiceView[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
-            const services = await this.serviceRepository.getAllServices(connection);
+            const services = await this.serviceRepository.getAllServices(connection, branch_id);
             const ServiceCategory = await this.serviceRepository.getAllServicesCategories(connection);
             const serviceCategoryMap = new Map<number, ServiceCategory>();
             ServiceCategory.forEach((category) => {
@@ -552,11 +552,11 @@ export default class SettingService {
         }
     }
 
-    async getFeaturedServices(): Promise<Service[]> {
+    async getFeaturedServices(branch_id?: number): Promise<Service[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
-            return await this.serviceRepository.getFeaturedServices(connection);
+            return await this.serviceRepository.getFeaturedServices(connection, branch_id);
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;

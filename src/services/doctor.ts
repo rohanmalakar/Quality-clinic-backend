@@ -52,11 +52,11 @@ export default class DoctorService {
         }
     }
 
-    async getAllDoctors(): Promise<Doctor[]> {
+    async getAllDoctors(branch_id?: number): Promise<Doctor[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
-            return await this.doctorRepository.getAllDoctors(connection);
+            return await this.doctorRepository.getAllDoctors(connection, branch_id);
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;
@@ -595,11 +595,11 @@ export default class DoctorService {
         }
     }
 
-    async getFeaturedDoctors(): Promise<Doctor[]> {
+    async getFeaturedDoctors(branch_id?: number): Promise<Doctor[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
-            return await this.doctorRepository.getFeaturedDoctors(connection);
+            return await this.doctorRepository.getFeaturedDoctors(connection, branch_id);
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;

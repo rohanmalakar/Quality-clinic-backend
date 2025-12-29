@@ -11,10 +11,20 @@ interface ServiceTimeSlotRow extends ServiceTimeSlot, RowDataPacket {}
 interface ServiceBranchRow extends ServiceBranch, RowDataPacket {}
 interface MaxBookingRow extends MaxBooking, RowDataPacket {}
 export default class ServiceRepository {
-    async getAllServices(connection: PoolConnection): Promise<Service[]> {
+    async getAllServices(connection: PoolConnection, branch_id?: number): Promise<Service[]> {
         try {
-            const [services,] = await connection.query<ServiceRow[]>('SELECT * from service');
-            return services;
+            if (!branch_id || branch_id === 0) {
+                const [services,] = await connection.query<ServiceRow[]>('SELECT * from service');
+                return services;
+            } else {
+                const [services,] = await connection.query<ServiceRow[]>(
+                    `SELECT DISTINCT s.* FROM service s
+                    JOIN service_branch sb ON s.id = sb.service_id
+                    WHERE sb.branch_id = ?`,
+                    [branch_id]
+                );
+                return services;
+            }
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;
@@ -490,10 +500,24 @@ export default class ServiceRepository {
         }
     }
 
-    async getFeaturedServices(connection: PoolConnection): Promise<Service[]> {
+    async getFeaturedServices(connection: PoolConnection, branch_id?: number): Promise<Service[]> {
         try {
-            const [services,] = await connection.query<ServiceRow[]>('SELECT * from service limit 5');
-            return services;
+            if (!branch_id || branch_id === 0) {
+                // Show all featured services from all branches
+                const [services,] = await connection.query<ServiceRow[]>('SELECT * FROM service LIMIT 5');
+                return services;
+            } else {
+                // Show featured services only from the specified branch
+                const [services,] = await connection.query<ServiceRow[]>(
+                    `SELECT DISTINCT s.* 
+                    FROM service s 
+                    INNER JOIN service_branch sb ON s.id = sb.service_id 
+                    WHERE sb.branch_id = ?
+                    LIMIT 5`,
+                    [branch_id]
+                );
+                return services;
+            }
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;

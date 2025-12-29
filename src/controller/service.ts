@@ -89,6 +89,9 @@ const SCHEMA = {
             branch_id: z.number(),
             maximum_booking_per_slot: z.number()
         }))
+    }),
+    GET_FEATURED_SERVICES: z.object({
+        branch_id: z.coerce.number().optional()
     })
 
 }
@@ -96,9 +99,11 @@ const SCHEMA = {
 var router = Router();
 
 router.get('/',
+    validateRequest({ query: z.object({ branch_id: z.coerce.number().optional() }) }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            const services = await serviceService.getAll();
+            const { branch_id } = req.query as { branch_id?: number };
+            const services = await serviceService.getAll(branch_id);
             res.json(successResponse(services));
         } catch (error) {
             next(error);
@@ -307,10 +312,14 @@ router.post('/branch',
 )
 
 router.get('/featured',
+    validateRequest({
+        query: SCHEMA.GET_FEATURED_SERVICES
+    }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            const doctors = await serviceService.getFeaturedServices();
-            res.json(successResponse(doctors));
+            const { branch_id } = req.query as { branch_id?: number };
+            const services = await serviceService.getFeaturedServices(branch_id);
+            res.json(successResponse(services));
         } catch (e) {
             next(e)
         }

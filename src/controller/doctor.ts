@@ -88,16 +88,20 @@ const SCHEMA = {
     GET_DOCTOR_WEEKLY_AVAILABILITY: z.object({
         doctor_id: z.string(),
         branch_id: z.string()
+    }),
+    GET_FEATURED_DOCTORS: z.object({
+        branch_id: z.coerce.number().optional()
     })
 }
 
 
 // GET all doctors
 router.get('/',
+    validateRequest({ query: z.object({ branch_id: z.coerce.number().optional() }) }),
     async function (req: Request, res: Response, next: NextFunction) {
-        console.log(req);
         try {
-            const doctors = await doctorService.getAllDoctors();
+            const { branch_id } = req.query as { branch_id?: number };
+            const doctors = await doctorService.getAllDoctors(branch_id);
             res.json(successResponse(doctors));
         } catch (e) {
             next(e);
@@ -361,9 +365,13 @@ router.get('/time-slot/available',
 )
 
 router.get('/featured',
+    validateRequest({
+        query: SCHEMA.GET_FEATURED_DOCTORS
+    }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            const doctors = await doctorService.getFeaturedDoctors();
+            const { branch_id } = req.query as { branch_id?: number };
+            const doctors = await doctorService.getFeaturedDoctors(branch_id);
             res.json(successResponse(doctors));
         } catch (e) {
             next(e)
