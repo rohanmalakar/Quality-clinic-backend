@@ -95,6 +95,7 @@ const SCHEMA = {
 // GET all doctors
 router.get('/',
     async function (req: Request, res: Response, next: NextFunction) {
+        console.log(req);
         try {
             const doctors = await doctorService.getAllDoctors();
             res.json(successResponse(doctors));

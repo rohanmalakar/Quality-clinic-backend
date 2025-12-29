@@ -557,6 +557,7 @@ export default class BookingService {
         try {
             connection = await pool.getConnection();
             const doctorBookings = await this.bookingRepository.getFutureDoctorBookings(connection, branch_id, user_id);
+
             return doctorBookings;
         } catch (e) {
             if (e instanceof RequestError) {
