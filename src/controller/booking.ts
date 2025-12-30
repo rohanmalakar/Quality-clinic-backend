@@ -33,7 +33,6 @@ const SCHEMA = {
     }),
     SERVICE: z.object({
         service_id: z.number(),
-        time_slot_id: z.number(),
         branch_id: z.number(),
         date: z.string().date()
     }),
@@ -42,7 +41,6 @@ const SCHEMA = {
             .array(
                 z.object({
                     service_id: z.number().int().positive(),
-                    time_slot_id: z.number().int().positive(),
                     date: z
                     .string()
                     .refine((s: string) => !Number.isNaN(Date.parse(s)), { message: 'invalid date' }),
@@ -59,7 +57,6 @@ const SCHEMA = {
     }),
     SERVICE_RESCHEDULE: z.object({
         booking_id: z.number(),
-        time_slot_id: z.number(),
         date: z.string().date()
     }),
     GET_BOOKINGS_BY_BRANCH: z.object({
@@ -154,7 +151,7 @@ router.post('/service',
                 next(ERRORS.AUTH_UNAUTHERISED);
             }
             const body: z.infer<typeof SCHEMA.SERVICE> = req.body;
-            const booking = await bookingService.bookService(body.service_id, body.time_slot_id, req.userID!!, body.date, body.branch_id);
+            const booking = await bookingService.bookService(body.service_id, req.userID!!, body.date, body.branch_id);
             res.send(successResponse(booking));
         } catch (e) {
             next(e)
@@ -232,7 +229,7 @@ router.post('/service/reschedule',
                 next(ERRORS.AUTH_UNAUTHERISED);
             }
             const body: z.infer<typeof SCHEMA.SERVICE_RESCHEDULE> = req.body;
-            const booking = await bookingService.rescheduleService(body.booking_id, body.time_slot_id, req.userID!!, body.date, req.isAdmin ?? false);
+            const booking = await bookingService.rescheduleService(body.booking_id, req.userID!!, body.date, req.isAdmin ?? false);
             res.send(successResponse(booking));
         } catch (e) {
             next(e)

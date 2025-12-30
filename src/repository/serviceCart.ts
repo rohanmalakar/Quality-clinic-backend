@@ -2,6 +2,7 @@ import { ServiceCart } from "@models/serviceCart";
 import { ERRORS } from "@utils/error";
 import { ResultSetHeader } from "mysql2";
 import { PoolConnection } from "mysql2/promise";
+import { date } from "zod";
 
 /**
  * The ServiceCartRepository class is responsible for all direct database operations
@@ -239,5 +240,28 @@ export default class ServiceCartRepository {
             'DELETE FROM service_cart WHERE user_id = ?',
             [userId]
         );
+    }
+
+    async getServiceCartByUserBranchService(
+        connection: PoolConnection,
+        user_id: number,
+        branch_id: number,
+        service_id: number,
+    ): Promise<ServiceCart | null> {
+        const query = `
+            SELECT
+                *
+            FROM
+                service_cart sc
+            WHERE
+                sc.user_id = ? AND sc.branch_id = ? AND sc.service_id = ?
+        `;
+
+        const [rows] = await connection.query<ServiceCart[]>(query, [user_id, branch_id, service_id]);
+
+        if (rows.length === 0) {
+            return null;
+        }
+        return rows[0];
     }
 }

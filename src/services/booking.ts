@@ -193,24 +193,19 @@ export default class BookingService {
         }
     }
 
-    async bookService(service_id: number, time_slot_id: number, user_id: number, date: string, branch_id: number): Promise<BookingServiceI> {
+    async bookService(service_id: number, user_id: number, date: string, branch_id: number): Promise<BookingServiceI> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
             await connection.beginTransaction();
 
             const maximumBooking = await this.serviceRepository.getMaximumBooking(connection, service_id, branch_id);
-            const isValidtimeSlot = await this.bookingRepository.checkTimeSlotExists(connection, service_id,time_slot_id)
-
-            if(!isValidtimeSlot){
-                throw ERRORS.SERVICE_NOT_FOUND
-            }
-            const existingBooking = await this.bookingRepository.getAllServiceBookingForSlot(connection, service_id, date, time_slot_id, branch_id);
+            const existingBooking = await this.bookingRepository.getAllServiceBookingForSlot(connection, service_id, date, branch_id);
             if (existingBooking.length >= maximumBooking.maximum_booking_per_slot) {
                 throw ERRORS.ALL_SLOTS_ALREADY_BOOKED_FOR_THIS_SERVICE;
             }
             const vat = await this.vatRepository.getVat(connection);
-            const booking = await this.bookingRepository.bookService(connection, service_id, time_slot_id, user_id, date, branch_id, vat);
+            const booking = await this.bookingRepository.bookService(connection, service_id, user_id, date, branch_id, vat);
             await connection.commit();
             return booking;
         } catch (e) {
@@ -227,7 +222,7 @@ export default class BookingService {
 
 
     async bookMultipleServices(
-        items: Array<{ service_id: number; time_slot_id: number; date: string; branch_id: number }>,
+        items: Array<{ service_id: number; date: string; branch_id: number }>,
         user_id: number,
         user_note?: string
     ): Promise<BookingServiceI[]> {
@@ -236,58 +231,14 @@ export default class BookingService {
             connection = await pool.getConnection();
             await connection.beginTransaction();
 
-            // 1) Validate time slots exist for all items (single DB call preferred)
-            const distinctPairs = Array.from(
-            new Set(items.map(i => `${i.service_id}::${i.time_slot_id}`))
-            ).map(s => {
-            const [service_id, time_slot_id] = s.split('::').map(Number);
-            return { service_id, time_slot_id };
-            });
-
-            const validMap = await this.bookingRepository.checkTimeSlotsExistBulk(connection, distinctPairs);
-            console.log("########",validMap);
-
-            for (const p of distinctPairs) {
-                const key = `${p.service_id}::${p.time_slot_id}`;
-                console.log(key);
-                if (!validMap[key]) {
-                    console.log("**************************")
-                    throw ERRORS.SERVICE_TIME_SLOT_NOT_FOUND;
-                }
-            }
-
-            // 2) Lock relevant service-slot capacity rows to avoid race conditions
-            // Use repository to fetch maximumBooking rows with SELECT ... FOR UPDATE
-            // const capacityMap = await this.serviceRepository.getMaximumBookingBulkForUpdate(
-            // connection,
-            // items.map(i => ({ service_id: i.service_id, branch_id: i.branch_id }))
-            // );
-
-            // 3) For each item, count existing bookings in the same slot (use FOR SHARE or rely on committed rows after lock)
-            // const countsMap = await this.bookingRepository.countBookingsForSlotsBulk(
-            //     connection,
-            //     items.map(i => ({ service_id: i.service_id, date: i.date, time_slot_id: i.time_slot_id, branch_id: i.branch_id }))
-            // );
-
-            // // 4) Validate capacities
-            // for (const it of items) {
-            // const key = `${it.service_id}::${it.branch_id}`;
-            // const cap = capacityMap[key];
-            // if (!cap) throw ERRORS.ALL_SLOTS_ALREADY_BOOKED_FOR_THIS_SERVICE;
-            // const current = countsMap[`${it.service_id}::${it.date}::${it.time_slot_id}::${it.branch_id}`] ?? 0;
-            // if (current + 1 > cap.maximum_booking_per_slot) {
-            //     throw ERRORS.ALL_SLOTS_ALREADY_BOOKED_FOR_THIS_SERVICE;
-            // }
-            // }
-
-            // 5) Fetch VAT once (or per-service if necessary)
+            // Fetch VAT once
             const vat = await this.vatRepository.getVat(connection);
 
-            // 6) Insert bookings one-by-one (or batch) and collect results
+            // Insert bookings one-by-one and collect results
             const created: BookingServiceI[] = [];
             for (const it of items) {
-                // Optional: prevent duplicate booking by same user for same service/time/date/branch
-                const duplicate = await this.bookingRepository.findDuplicateBooking(connection, it.service_id, it.time_slot_id, user_id, it.date, it.branch_id);
+                // Optional: prevent duplicate booking by same user for same service/date/branch
+                const duplicate = await this.bookingRepository.findDuplicateBooking(connection, it.service_id, user_id, it.date, it.branch_id);
                 console.log("!!!!!!!!!!!!!!",duplicate);
                 if (duplicate.length > 0) {
                     
@@ -311,7 +262,6 @@ export default class BookingService {
                 const b = await this.bookingRepository.bookService(
                     connection,
                     it.service_id,
-                    it.time_slot_id,
                     user_id,
                     it.date,
                     it.branch_id,
@@ -394,7 +344,7 @@ export default class BookingService {
         }
     }
 
-    async rescheduleService(booking_id: number, time_slot_id: number, user_id: number, date: string, is_admin: boolean): Promise<any> {
+    async rescheduleService(booking_id: number, user_id: number, date: string, is_admin: boolean): Promise<any> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
@@ -409,12 +359,12 @@ export default class BookingService {
                     throw ERRORS.BOOKING_NOT_FOUND;
                 }
             }
-            const existingBooking = await this.bookingRepository.getServiceBookingOrNull(connection, booking.service_id, date, time_slot_id, booking_id);
+            const existingBooking = await this.bookingRepository.getServiceBookingOrNull(connection, booking.service_id, date, booking_id);
             if (existingBooking) {
                 throw ERRORS.DOCTOR_ALREADY_BOOKED_FOR_THIS_SLOT;
             }
             const oldBooking = await this.bookingRepository.rescheduleService(connection, booking_id);
-            const newBooking = await this.bookingRepository.bookService(connection, booking.service_id, time_slot_id, user_id, date, booking.branch_id, booking.vat_percentage);
+            const newBooking = await this.bookingRepository.bookService(connection, booking.service_id, user_id, date, booking.branch_id, booking.vat_percentage);
             await connection.commit();
             return newBooking;
         } catch (e) {

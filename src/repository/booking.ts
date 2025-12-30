@@ -45,7 +45,6 @@ export default class BookingRepository {
     async findDuplicateBooking(
         connection: PoolConnection,
         service_id: number,
-        time_slot_id: number,
         user_id: number,
         date: string,
         branch_id: number
@@ -53,10 +52,10 @@ export default class BookingRepository {
         const [rows] = await connection.query(
             `SELECT *
             FROM booking_service
-            WHERE service_id = ? AND time_slot_id = ? AND user_id = ? AND date = ? AND branch_id = ?
+            WHERE service_id = ? AND user_id = ? AND date = ? AND branch_id = ?
             LIMIT 1`,
-            [service_id, time_slot_id, user_id, date, branch_id]
-        ) as unknown as Array<any>; // ✅ double cast: unknown → Array<any>
+            [service_id, user_id, date, branch_id]
+        ) as unknown as Array<any>;
 
         return rows;
 
@@ -271,43 +270,30 @@ export default class BookingRepository {
     async bookService(
         connection: PoolConnection,
         service_id: number,
-        time_slot_id: number,
         user_id: number,
         date: string,
         branch_id: number,
         vat: string
     ): Promise<BookingServiceIRow> {
         try {
-            // Check if the service is already booked for the same time slot, date, and branch
-            const [rows] = await connection.query<any[]>(
-                `SELECT id FROM booking_service 
-                WHERE service_id = ? AND time_slot_id = ? AND date = ? AND branch_id = ?`,
-                [service_id, time_slot_id, date, branch_id]
-            );
-
-            if (rows.length > 0) {
-                throw ERRORS.DUPLICATE_RECORD;
-            }
-
             const [result] = await connection.query<ResultSetHeader>(
                 `INSERT INTO booking_service 
-                (service_id, time_slot_id, user_id, date, branch_id, vat_percentage) 
-                VALUES (?, ?, ?, ?, ?, ?)`,
-                [service_id, time_slot_id, user_id, date, branch_id, vat]
+                (service_id, user_id, date, branch_id, vat_percentage) 
+                VALUES (?, ?, ?, ?, ?)`,
+                [service_id, user_id, date, branch_id, vat]
             );
 
             const booking_id = result.insertId;
             return await this.getBookingService(connection, booking_id);
         } catch (e) {
             logger.error(e);
-            if (e === ERRORS.DUPLICATE_RECORD) throw e;
             throw ERRORS.DATABASE_ERROR;
         }
     }
 
-    async getServiceBookingOrNull(connection: PoolConnection, service_id: number, date: string, time_slot_id: number, branch_id: number): Promise<BookingServiceIRow | null> {
+    async getServiceBookingOrNull(connection: PoolConnection, service_id: number, date: string, branch_id: number): Promise<BookingServiceIRow | null> {
         try {
-            const [result,] = await connection.query<BookingServiceIRow[]>('SELECT * FROM booking_service WHERE service_id = ? AND date = ? AND id = ? AND branch_id = ?', [service_id, date, time_slot_id, branch_id]);
+            const [result,] = await connection.query<BookingServiceIRow[]>('SELECT * FROM booking_service WHERE service_id = ? AND date = ? AND branch_id = ?', [service_id, date, branch_id]);
             if (result.length === 0) {
                 return null;
             }
@@ -332,18 +318,14 @@ export default class BookingRepository {
     }
 
     async checkTimeSlotExists(connection: PoolConnection, service_id: number, time_slot_id: number){
-        try {
-            const [result,] = await connection.query<BookingServiceIRow[]>('SELECT * FROM service_time_slot WHERE service_id = ? AND id = ?', [service_id, time_slot_id]);
-            return result;
-        } catch (e) {
-            logger.error(e)
-            throw ERRORS.DATABASE_ERROR
-        }
+        // Time slots are no longer used for service bookings
+        return true;
     }
 
-    async getAllServiceBookingForSlot(connection: PoolConnection, service_id: number, date: string, time_slot_id: number, branch_id: number): Promise<BookingServiceIRow[]> {
+    async getAllServiceBookingForSlot(connection: PoolConnection, service_id: number, date: string, branch_id: number): Promise<BookingServiceIRow[]> {
+        // Time slots are no longer used, return bookings by service, date, and branch only
         try {
-            const [result,] = await connection.query<BookingServiceIRow[]>('SELECT * FROM booking_service WHERE service_id = ? AND date = ? AND id = ? AND branch_id = ?', [service_id, date, time_slot_id, branch_id]);
+            const [result,] = await connection.query<BookingServiceIRow[]>('SELECT * FROM booking_service WHERE service_id = ? AND date = ? AND branch_id = ?', [service_id, date, branch_id]);
             return result;
         } catch (e) {
             logger.error(e)
@@ -510,9 +492,6 @@ export default class BookingRepository {
                     sc.type AS service_category_type,
                     sc.name_en AS service_category_name_en,
                     sc.name_ar AS service_category_name_ar,
-                    bs.time_slot_id AS time_slot_id,
-                    ts.start_time AS time_slot_start_time,
-                    ts.end_time AS time_slot_end_time,
                     bs.date AS booking_date,
                     bs.status AS booking_status
                 FROM
@@ -524,9 +503,8 @@ export default class BookingRepository {
                 LEFT JOIN
                     service s ON bs.service_id = s.id
                 LEFT JOIN
-                    service_category sc ON s.category_id = sc.id
-                LEFT JOIN
-                    service_time_slot ts ON bs.time_slot_id = ts.id;`);
+                    service_category sc ON s.category_id = sc.id;
+                `);
             return result;
         }
         catch (e) {

@@ -85,7 +85,7 @@ export default class ServiceCartService {
         service_id: number,
         date: string,
         vat_percentage: number
-    ): Promise<ServiceCart> {
+    ): Promise<ServiceCart | Record<string, never>> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
@@ -101,6 +101,21 @@ export default class ServiceCartService {
             if (!service) {
                 throw ERRORS.SERVICE_NOT_FOUND;
             }
+
+            //check if the cartItem already exists for the user with same branch_id, service_id and date
+            const existingCartItem = await this.serviceCartRepository.getServiceCartByUserBranchService(
+                connection,
+                user_id,
+                branch_id,
+                service_id,
+            );
+
+
+            if (existingCartItem) {
+                // If item already exists, return empty object to indicate success but no new item created
+                return {};
+            }
+
 
             return await this.serviceCartRepository.createServiceCart(
                 connection,

@@ -60,6 +60,7 @@ export const ERRORS = {
 
     EMAIL_ALREADY_EXISTS: new RequestError("Email already exists", 20001, 400),
     PHONE_ALREADY_EXISTS: new RequestError("Phone already exists", 20002, 400),
+    SERVICE_CART_ITEM_ALREADY_EXISTS: new RequestError("Service cart item already exists", 20003, 400),
     NATIONAL_ID_ALREADY_EXISTS: new RequestError("National ID already exists", 20003, 400),
     INVALID_OTP: new RequestError("Invalid OTP", 20004, 400),
     INVALID_REFRESH_TOKEN: new RequestError("Invalid refresh token", 20006, 400),
