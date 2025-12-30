@@ -52,25 +52,6 @@ const SCHEMA = {
         image_en: z.string().optional(),
         type: z.enum(['DENTIST', 'DERMATOLOGIST']).optional()
     }),
-    CREATE_TIME_SLOT: z.object({
-        service_id: z.number(),
-        start_time: z.string().time(),
-        end_time: z.string().time()
-    }),
-    CREATE_TIME_SLOTS: z.object({
-        service_id: z.number(),
-        time_slots: z.array(z.object({
-            start_time: z.string().time(),
-            end_time: z.string().time()
-        }))
-    }),
-    UPDATE_TIME_SLOTS: z.object({
-        service_id: z.number(),
-        time_slots: z.array(z.object({
-            start_time: z.string().time(),
-            end_time: z.string().time()
-        }))
-    }),
     ADD_SERVICE_TO_BRANCH: z.object({
         service_id: z.number(),
         branch_id: z.number(),
@@ -186,93 +167,6 @@ router.put('/category/:category_id',
             const category_id = parseInt(req.params.category_id);
             const category = await serviceService.updateCategory(category_id, body.name_ar, body.name_en, body.image_ar, body.image_en, body.type);
             res.json(successResponse(category));
-        } catch (error) {
-            next(error);
-        }
-    }
-)
-
-router.get('/time_slots',
-    validateRequest({
-        query: z.object({
-            service_id: z.string(),
-        })
-    }),
-    async function (req: Request, res: Response, next: NextFunction) {
-        try {
-            const service_id = parseInt(req.query.service_id as string);
-            const timeSlots = await serviceService.getTimeSlots(service_id);
-            res.json(successResponse(timeSlots));
-        } catch (error) {
-            next(error);
-        }
-    }
-)
-
-router.get('/time_slot/available',
-    verifyClient,
-    validateRequest({
-        query: z.object({
-            service_id: z.string(),
-            date: z.string().date(),
-            branch_id: z.string()
-        })
-    }),
-    async function (req: Request, res: Response, next: NextFunction) {
-        try {
-            const service_id = parseInt(req.query.service_id as string);
-            const branch_id = parseInt(req.query.branch_id as string);
-            const date = req.query.date as string;
-            const timeSlots = await serviceService.getAvailableTimeSlots(service_id, branch_id, date);
-            res.json(successResponse(timeSlots));
-        } catch (error) {
-            next(error);
-        }
-    }
-)
-
-router.post('/time_slot',
-    verifyAdmin,
-    validateRequest({
-        body: SCHEMA.CREATE_TIME_SLOT
-    }),
-    async function (req: Request, res: Response, next: NextFunction) {
-        try {
-            const body: z.infer<typeof SCHEMA.CREATE_TIME_SLOT> = req.body;
-            const timeSlot = await serviceService.createServiceTimeSlot(body.service_id, body.start_time, body.end_time);
-            res.json(successResponse(timeSlot));
-        } catch (error) {
-            next(error);
-        }
-    }
-)
-
-router.post('/time_slots',
-    verifyAdmin,
-    validateRequest({
-        body: SCHEMA.CREATE_TIME_SLOTS
-    }),
-    async function (req: Request, res: Response, next: NextFunction) {
-        try {
-            const body: z.infer<typeof SCHEMA.CREATE_TIME_SLOTS> = req.body;
-            const timeSlot = await serviceService.createServiceTimeSlots(body.service_id, body.time_slots);
-            res.json(successResponse(timeSlot));
-        } catch (error) {
-            next(error);
-        }
-    }
-)
-
-router.put('/time_slots',
-    verifyAdmin,
-    validateRequest({
-        body: SCHEMA.UPDATE_TIME_SLOTS
-    }),
-    async function (req: Request, res: Response, next: NextFunction) {
-        try {
-            const body: z.infer<typeof SCHEMA.UPDATE_TIME_SLOTS> = req.body;
-            const timeSlot = await serviceService.updateServiceTimeSlots(body.service_id, body.time_slots);
-            res.json(successResponse(timeSlot));
         } catch (error) {
             next(error);
         }

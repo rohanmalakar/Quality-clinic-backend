@@ -872,4 +872,17 @@ export default class BookingRepository {
     }
     }
 
+    async getUserBookings(connection: PoolConnection, user_id: number): Promise<Array<{id: number, service_id: number, date: string, branch_id: number}>> {
+        try {
+            const [result] = await connection.query<any[]>(
+                'SELECT id, service_id, date, branch_id FROM booking_service WHERE user_id = ? ORDER BY date DESC',
+                [user_id]
+            );
+            return result;
+        } catch (e) {
+            logger.error('Error in getUserBookings:', e);
+            throw ERRORS.DATABASE_ERROR;
+        }
+    }
+
 }

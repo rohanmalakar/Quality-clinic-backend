@@ -223,162 +223,6 @@ export default class SettingService {
     }
         
 
-    async getTimeSlots(service_id: number): Promise<ServiceTimeSlot[]> {
-        let connection: PoolConnection | null = null;
-        try {
-            connection = await pool.getConnection();
-            const service = await this.serviceRepository.getServiceById(connection, service_id);
-            if (!service) {
-                throw ERRORS.SERVICE_NOT_FOUND;
-            }
-            const timeSlots = await this.serviceRepository.getTimeSlots(connection, service_id);
-            return timeSlots;
-        } catch (error) {
-            if (error instanceof RequestError) {
-                throw error;
-            }
-            throw ERRORS.INTERNAL_SERVER_ERROR;
-        } finally {
-            if (connection) {
-                connection.release();
-            }
-        }
-    }
-
-    async getAvailableTimeSlots(service_id: number, branch_id: number, date: string): Promise<ServiceTimeSlotAvailableView[]> {
-        let connection: PoolConnection | null = null;
-        try {
-            connection = await pool.getConnection();
-            const service = await this.serviceRepository.getServiceById(connection, service_id);
-            if (!service) {
-                throw ERRORS.SERVICE_NOT_FOUND;
-            }
-            const service_branch =  await this.serviceRepository.getServiceBranchOrNull(connection, service_id, branch_id);
-            if (!service_branch) {
-                throw ERRORS.BRANCH_NOT_FOUND;
-            }
-            const timeSlots = await this.serviceRepository.getTimeSlots(connection, service_id);
-            if(!timeSlots) {
-                throw ERRORS.SERVICE_TIME_SLOT_NOT_FOUND;
-            }
-            const booking = await this.bookingRepository.getAllServiceBookingForBranch(connection, service_id, branch_id, date);
-
-            const time_slot_ids = booking.map((bookingService) => bookingService.time_slot_id);
-            const time_slot_map = new Map<number, number>();
-            time_slot_ids.forEach((time_slot_id) => {
-                if (time_slot_map.has(time_slot_id)) {
-                    const current = time_slot_map.get(time_slot_id) ?? 0;
-                    time_slot_map.set(time_slot_id, current + 1);
-                } else {
-                    time_slot_map.set(time_slot_id, 1);
-                }
-            });
-            return timeSlots.map((timeSlot) => {
-                const available = time_slot_map.get(timeSlot.id) ?? 0;
-                return {
-                    id: timeSlot.id,
-                    service_id: timeSlot.service_id,
-                    start_time: timeSlot.start_time,
-                    end_time: timeSlot.end_time,
-                    available: available < service_branch.maximum_booking_per_slot
-                }
-            })
-        } catch (error) {
-            if (error instanceof RequestError) {
-                throw error;
-            }
-            throw ERRORS.INTERNAL_SERVER_ERROR;
-        } finally {
-            if (connection) {
-                connection.release();
-            }
-        }
-    }
-
-    async createServiceTimeSlot(service_id: number, start_time: string, end_time: string): Promise<ServiceTimeSlot> {
-        let connection: PoolConnection | null = null;
-        try {
-            connection = await pool.getConnection();
-            const service = await this.serviceRepository.getServiceById(connection, service_id);
-            if (!service) {
-                throw ERRORS.SERVICE_NOT_FOUND;
-            }
-            const timeSlot = await this.serviceRepository.createServiceTimeSlot(connection, service_id, start_time, end_time);
-            return timeSlot;
-        } catch (error) {
-            if (error instanceof RequestError) {
-                throw error;
-            }
-            throw ERRORS.INTERNAL_SERVER_ERROR;
-        } finally {
-            if (connection) {
-                await connection.rollback();
-                connection.release();
-            }
-        }
-    }
-
-    async createServiceTimeSlots(service_id: number, time_slots: {start_time: string, end_time: string}[]): Promise<ServiceTimeSlot[]> {
-        let connection: PoolConnection | null = null;
-        try {
-            connection = await pool.getConnection();
-            const service = await this.serviceRepository.getServiceById(connection, service_id);
-            if (!service) {
-                throw ERRORS.SERVICE_NOT_FOUND;
-            }
-            const timeSlots: ServiceTimeSlot[] = [];
-            for(const time_slot of time_slots) {
-                if (!time_slot.start_time || !time_slot.end_time) {
-                    throw ERRORS.INVALID_TIME_SLOT;
-                }
-                const timeSlot = await this.serviceRepository.createServiceTimeSlot(connection, service_id, time_slot.start_time, time_slot.end_time);
-                timeSlots.push(timeSlot);
-            }
-            return timeSlots;
-        } catch (error) {
-            if (error instanceof RequestError) {
-                throw error;
-            }
-            throw ERRORS.INTERNAL_SERVER_ERROR;
-        } finally {
-            if (connection) {
-                await connection.rollback();
-                connection.release();
-            }
-        }
-    }
-
-    async updateServiceTimeSlots(service_id: number, time_slots: {start_time: string, end_time: string}[]): Promise<ServiceTimeSlot[]> {
-        let connection: PoolConnection | null = null;
-        try {
-            connection = await pool.getConnection();
-            const service = await this.serviceRepository.getServiceByIdOrNull(connection, service_id);
-            if (!service) {
-                throw ERRORS.SERVICE_NOT_FOUND;
-            }
-            const timeSlots: ServiceTimeSlot[] = [];
-            await this.serviceRepository.setAllServiceTimeSlotsInactive(connection, service_id);
-            for(const time_slot of time_slots) {
-                if (!time_slot.start_time || !time_slot.end_time) {
-                    throw ERRORS.INVALID_TIME_SLOT;
-                }
-                const timeSlot = await this.serviceRepository.createServiceTimeSlot(connection, service_id, time_slot.start_time, time_slot.end_time);
-                timeSlots.push(timeSlot);
-            }
-            return timeSlots;
-        } catch (error) {
-            if (error instanceof RequestError) {
-                throw error;
-            }
-            throw ERRORS.INTERNAL_SERVER_ERROR;
-        } finally {
-            if (connection) {
-                await connection.rollback();
-                connection.release();
-            }
-        }
-    }
-
     async getServicesForBranch(branch_id: number): Promise<ServiceView[]> {
         let connection: PoolConnection | null = null;
         try {
@@ -544,6 +388,56 @@ export default class SettingService {
             return categories;
         } catch (error) {
             logger.error(`Error getting all categories: ${error}`);
+            throw ERRORS.INTERNAL_SERVER_ERROR;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
+
+    async getUserServices(userId: number): Promise<ServiceView[]> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            
+            // Get all bookings for this user
+            const bookings = await connection.query(
+                `SELECT DISTINCT service_id FROM booking_service WHERE user_id = ?`,
+                [userId]
+            );
+            
+            const serviceIds = (bookings[0] as any[]).map(row => row.service_id);
+            
+            if (serviceIds.length === 0) {
+                return [];
+            }
+            
+            // Get all services that the user has booked
+            const services = await this.serviceRepository.getServicesByIds(connection, serviceIds);
+            const serviceCategory = await this.serviceRepository.getAllServicesCategories(connection);
+            
+            const serviceCategoryMap = new Map<number, ServiceCategory>();
+            serviceCategory.forEach((category) => {
+                serviceCategoryMap.set(category.id, category);
+            });
+            
+            const serviceViews: ServiceView[] = [];
+            for (let i = 0; i < services.length; i++) {
+                const service = services[i];
+                const category = serviceCategoryMap.get(service.category_id);
+                if (!category) {
+                    continue;
+                }
+                serviceViews.push(createServiceView(service, category));
+            }
+            
+            return serviceViews;
+        } catch (error) {
+            if (error instanceof RequestError) {
+                throw error;
+            }
+            logger.error(`Error getting user services: ${error}`);
             throw ERRORS.INTERNAL_SERVER_ERROR;
         } finally {
             if (connection) {

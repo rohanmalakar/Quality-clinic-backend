@@ -15,8 +15,7 @@ CREATE TABLE "service_cart" (
     "user_id" int NOT NULL,
     "branch_id" int NOT NULL,
     "service_id" int NOT NULL,
-    "time_slot_id" int NOT NULL,
-    "date" date NOT NULL,
+    "date" varchar(255) NOT NULL,
     "vat_percentage" decimal(5,2) NOT NULL,
     PRIMARY KEY ("id")
 )
@@ -33,7 +32,7 @@ CREATE TABLE "service_cart" (
 export interface ServiceCart extends RowDataPacket {
   id: number;
   user_id: number;
-  date: Date;
+  date: string;
   vat_percentage: number;
   branch: {
     id: number;

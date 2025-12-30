@@ -229,6 +229,26 @@ export default class ServiceRepository {
         }
     }
 
+    async getServicesByIds(connection: PoolConnection, serviceIds: number[]): Promise<Service[]> {
+        try {
+            if (serviceIds.length === 0) {
+                return [];
+            }
+            const placeholders = serviceIds.map(() => '?').join(',');
+            const [services,] = await connection.query<ServiceRow[]>(
+                `SELECT * FROM service WHERE id IN (${placeholders})`,
+                serviceIds
+            );
+            return services;
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            }
+            logger.error(e);
+            throw ERRORS.DATABASE_ERROR;
+        }
+    }
+
     // async createCategory(connection: PoolConnection, name_en: string, name_ar: string, image_ar: string, image_en: string, type: string): Promise<ServiceCategory> {
     //     try {
     //         const [result] = await connection.query<ResultSetHeader>('INSERT INTO service_category (name_en, name_ar, image_ar, image_en, type) VALUES (?, ?, ?, ?, ?)', [name_en, name_ar, image_ar, image_en, type]);

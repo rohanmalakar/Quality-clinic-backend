@@ -17,9 +17,9 @@ export default class BookingServiceRepository {
         cartItem: ServiceCart
     ): Promise<BookingService> {
         const [result] = await connection.query<ResultSetHeader>(
-            `INSERT INTO booking_service (user_id, branch_id, service_id, time_slot_id, date, vat_percentage) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [cartItem.user_id, cartItem.branch_id, cartItem.service_id, cartItem.time_slot_id, cartItem.date, cartItem.vat_percentage]
+            `INSERT INTO booking_service (user_id, branch_id, service_id, date, vat_percentage) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [cartItem.user_id, cartItem.branch_id, cartItem.service_id, cartItem.date, cartItem.vat_percentage]
         );
 
         const [rows] = await connection.query<BookingService[]>(

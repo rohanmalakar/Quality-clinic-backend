@@ -78,7 +78,6 @@ router.post('/doctor',
                 next(ERRORS.AUTH_UNAUTHERISED);
             }
             const body: z.infer<typeof SCHEMA.DOCTOR> = req.body;
-            console.log("/booking/doctor payload: ",body);
             const booking = await bookingService.bookDoctor(body.doctor_id, body.time_slot_id, req.userID!!, body.date, body.branch_id);
             res.send(successResponse(booking));
         } catch (e) {
@@ -250,6 +249,21 @@ router.get('/doctor',
             }
             const bookings = await bookingService.getAllDoctorBookingsForUser(req.userID!!);
             res.send(successResponse(bookings));
+        } catch (e) {
+            next(e)
+        }
+    }
+)
+
+router.get('/service/user',
+    verifyClient,
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.userID) {
+                next(ERRORS.AUTH_UNAUTHERISED);
+            }
+            const services = await bookingService.getUserServices(req.userID!!);
+            res.send(successResponse(services));
         } catch (e) {
             next(e)
         }

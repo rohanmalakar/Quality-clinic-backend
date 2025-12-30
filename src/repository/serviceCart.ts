@@ -40,17 +40,13 @@ export default class ServiceCartRepository {
                 s.name_en AS service_name_en,
                 s.name_ar AS service_name_ar,
                 b.name_en AS branch_name_en, 
-                b.name_ar AS branch_name_ar,
-                sts.start_time AS time_slot_start,
-                sts.end_time AS time_slot_end
+                b.name_ar AS branch_name_ar
             FROM
                 service_cart sc
             LEFT JOIN
                 service s ON sc.service_id = s.id
             LEFT JOIN
                 branch b ON sc.branch_id = b.id
-            LEFT JOIN
-                service_time_slot sts ON sc.time_slot_id = sts.id
             ORDER BY
                 sc.id DESC
         `;
@@ -93,15 +89,11 @@ export default class ServiceCartRepository {
                         s.service_image_ar_url,
                         b.id AS branch_id,
                         b.name_en     AS branch_name_en,
-                        b.name_ar     AS branch_name_ar,
-                        sts.id AS time_slot_id,
-                        sts.start_time AS time_slot_start,
-                        sts.end_time   AS time_slot_end
+                        b.name_ar     AS branch_name_ar
                     FROM service_cart sc
                     LEFT JOIN service s ON s.id = sc.service_id
                     LEFT JOIN service_category sca ON sca.id = s.category_id
                     LEFT JOIN branch b ON b.id = sc.branch_id
-                    LEFT JOIN service_time_slot sts ON sts.id = sc.time_slot_id
                     WHERE sc.user_id = ?
                     ORDER BY sc.id DESC`;
 
@@ -143,14 +135,13 @@ export default class ServiceCartRepository {
         user_id: number,
         branch_id: number,
         service_id: number,
-        time_slot_id: number,
         date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
         const [result] = await connection.query<ResultSetHeader>(
-            `INSERT INTO service_cart (user_id, branch_id, service_id, time_slot_id, date, vat_percentage) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [user_id, branch_id, service_id, time_slot_id, date, vat_percentage]
+            `INSERT INTO service_cart (user_id, branch_id, service_id, date, vat_percentage) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [user_id, branch_id, service_id, date, vat_percentage]
         );
 
         // Get the newly created cart item with all joined details
@@ -160,17 +151,13 @@ export default class ServiceCartRepository {
                 s.name_en AS service_name_en,
                 s.name_ar AS service_name_ar,
                 b.name_en AS branch_name_en, 
-                b.name_ar AS branch_name_ar,
-                sts.start_time AS time_slot_start,
-                sts.end_time AS time_slot_end
+                b.name_ar AS branch_name_ar
             FROM
                 service_cart sc
             LEFT JOIN
                 service s ON sc.service_id = s.id
             LEFT JOIN
                 branch b ON sc.branch_id = b.id
-            LEFT JOIN
-                service_time_slot sts ON sc.time_slot_id = sts.id
             WHERE
                 sc.id = ?
         `;
@@ -192,15 +179,14 @@ export default class ServiceCartRepository {
         user_id: number,
         branch_id: number,
         service_id: number,
-        time_slot_id: number,
         date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
         const [result] = await connection.query<ResultSetHeader>(
             `UPDATE service_cart 
-             SET user_id = ?, branch_id = ?, service_id = ?, time_slot_id = ?, date = ?, vat_percentage = ?
+             SET user_id = ?, branch_id = ?, service_id = ?, date = ?, vat_percentage = ?
              WHERE id = ?`,
-            [user_id, branch_id, service_id, time_slot_id, date, vat_percentage, id]
+            [user_id, branch_id, service_id, date, vat_percentage, id]
         );
 
         if (result.affectedRows === 0) {
@@ -214,17 +200,13 @@ export default class ServiceCartRepository {
                 s.name_en AS service_name_en,
                 s.name_ar AS service_name_ar,
                 b.name_en AS branch_name_en, 
-                b.name_ar AS branch_name_ar,
-                sts.start_time AS time_slot_start,
-                sts.end_time AS time_slot_end
+                b.name_ar AS branch_name_ar
             FROM
                 service_cart sc
             LEFT JOIN
                 service s ON sc.service_id = s.id
             LEFT JOIN
                 branch b ON sc.branch_id = b.id
-            LEFT JOIN
-                service_time_slot sts ON sc.time_slot_id = sts.id
             WHERE
                 sc.id = ?
         `;

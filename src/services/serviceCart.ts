@@ -46,11 +46,11 @@ export default class ServiceCartService {
             }
 
             // // 3. Loop through each cart item and create a corresponding booking.
-            // const newBookings: BookingService[] = [];
-            // for (const item of cartItems) {
-            //     const newBooking = await this.bookingServiceRepository.createBookingFromCart(connection, item);
-            //     newBookings.push(newBooking);
-            // }
+            const newBookings: BookingService[] = [];
+            for (const item of cartItems) {
+                const newBooking = await this.bookingServiceRepository.createBookingFromCart(connection, item);
+                newBookings.push(newBooking);
+            }
 
             // 4. After successfully creating all bookings, delete all original items from the user's cart.
             await this.serviceCartRepository.deleteServiceCartsByUser(connection, userId);
@@ -83,7 +83,6 @@ export default class ServiceCartService {
         user_id: number,
         branch_id: number,
         service_id: number,
-        time_slot_id: number,
         date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
@@ -103,67 +102,14 @@ export default class ServiceCartService {
                 throw ERRORS.SERVICE_NOT_FOUND;
             }
 
-            // Validate time slot exists
-            const timeSlot = await this.serviceRepository.getServiceTimeSlotByIdOrNull(connection, time_slot_id);
-            if (!timeSlot) {
-                throw ERRORS.SERVICE_TIME_SLOT_NOT_FOUND;
-            }
-
-            // Check if this exact item is already in the cart
-            const [existingRows] = await connection.query<any[]>(
-                `SELECT id FROM service_cart 
-                 WHERE user_id = ? AND service_id = ? AND date = ? AND time_slot_id = ?`,
-                [user_id, service_id, date, time_slot_id]
-            );
-
-            if (existingRows.length > 0) {
-                throw ERRORS.DUPLICATE_RECORD;
-            }
-
             return await this.serviceCartRepository.createServiceCart(
                 connection,
                 user_id,
                 branch_id,
                 service_id,
-                time_slot_id,
                 date,
                 vat_percentage
             );
-        } catch (e) {
-            if (e instanceof RequestError) {
-                throw e;
-            } else {
-                logger.error(e);
-                throw ERRORS.INTERNAL_SERVER_ERROR;
-            }
-        } finally {
-            if (connection) {
-                connection.release();
-            }
-        }
-    }
-
-    /**
-     * Check if a cart item already exists for the user
-     */
-    async checkCartItemExists(
-        user_id: number,
-        branch_id: number,
-        service_id: number,
-        time_slot_id: number,
-        date: string
-    ): Promise<boolean> {
-        let connection: PoolConnection | null = null;
-        try {
-            connection = await pool.getConnection();
-
-            const [existingRows] = await connection.query<any[]>(
-                `SELECT id FROM service_cart 
-                 WHERE user_id = ? AND branch_id = ? AND service_id = ? AND date = ? AND time_slot_id = ?`,
-                [user_id, branch_id, service_id, date, time_slot_id]
-            );
-
-            return existingRows.length > 0;
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;
@@ -231,7 +177,6 @@ export default class ServiceCartService {
         user_id: number,
         branch_id: number,
         service_id: number,
-        time_slot_id: number,
         date: string,
         vat_percentage: number
     ): Promise<ServiceCart> {
@@ -259,7 +204,6 @@ export default class ServiceCartService {
                 user_id,
                 branch_id,
                 service_id,
-                time_slot_id,
                 date,
                 vat_percentage
             );

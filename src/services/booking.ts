@@ -590,4 +590,69 @@ export default class BookingService {
             }
         }
     }
+
+    async getUserServices(userId: number): Promise<any[]> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            
+            // Get all bookings for the user (including duplicate service_ids)
+            const bookings = await this.bookingRepository.getUserBookings(connection, userId);
+            
+            if (bookings.length === 0) {
+                return [];
+            }
+            
+            // Get unique service IDs to fetch service details
+            const uniqueServiceIds = Array.from(new Set(bookings.map(b => b.service_id)));
+            
+            // Get all services and categories
+            const services = await this.serviceRepository.getServicesByIds(connection, uniqueServiceIds);
+            const serviceCategory = await this.serviceRepository.getAllServicesCategories(connection);
+            
+            // Create maps for quick lookup
+            const serviceMap = new Map();
+            services.forEach((service) => {
+                serviceMap.set(service.id, service);
+            });
+            
+            const serviceCategoryMap = new Map();
+            serviceCategory.forEach((category) => {
+                serviceCategoryMap.set(category.id, category);
+            });
+            
+            // Build response with booking details and service info
+            const serviceViews: any[] = [];
+            for (const booking of bookings) {
+                const service = serviceMap.get(booking.service_id);
+                if (!service) {
+                    continue;
+                }
+                
+                const category = serviceCategoryMap.get(service.category_id);
+                if (!category) {
+                    continue;
+                }
+                
+                serviceViews.push({
+                    booking_id: booking.id,
+                    booking_date: booking.date,
+                    ...service,
+                    category: category
+                });
+            }
+            
+            return serviceViews;
+        } catch (e) {
+            logger.error('Error in getUserServices:', e);
+            if (e instanceof RequestError) {
+                throw e;
+            }
+            throw ERRORS.INTERNAL_SERVER_ERROR;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
 }

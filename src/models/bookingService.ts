@@ -10,7 +10,6 @@ CREATE TABLE "booking_service" (
     "user_id" int NOT NULL,
     "branch_id" int NOT NULL,
     "service_id" int NOT NULL,
-    "time_slot_id" int NOT NULL,
     "date" date NOT NULL,
     "vat_percentage" decimal(5,2) NOT NULL,
     PRIMARY KEY ("id")
@@ -25,7 +24,6 @@ export interface BookingService extends RowDataPacket {
     user_id: number;
     branch_id: number;
     service_id: number;
-    time_slot_id: number;
     date: Date;
     vat_percentage: number;
 }

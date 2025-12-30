@@ -12,7 +12,6 @@ const SCHEMA = {
     ADD_TO_CART: z.object({
         branch_id: z.number().int().positive("Branch ID must be a positive integer."),
         service_id: z.number().int().positive("Service ID must be a positive integer."),
-        time_slot_id: z.number().int().positive("Time Slot ID must be a positive integer."),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format."),
         vat_percentage: z.number().min(0, "VAT percentage cannot be negative."),
     }),
@@ -20,48 +19,14 @@ const SCHEMA = {
         id: z.number().int().positive("Cart item ID must be a positive integer."),
         branch_id: z.number().int().positive(),
         service_id: z.number().int().positive(),
-        time_slot_id: z.number().int().positive(),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         vat_percentage: z.number().min(0),
     }),
-    DELETE_CART_ITEM: z.object({
-        id: z.number().int().positive("Cart item ID must be a positive integer."),
-    }),
-    MOVE_TO_BOOKING: z.object({}),
-    CHECK_CART_ITEM: z.object({
-        branch_id: z.number().int().positive("Branch ID must be a positive integer."),
-        service_id: z.number().int().positive("Service ID must be a positive integer."),
-        time_slot_id: z.number().int().positive("Time Slot ID must be a positive integer."),
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format."),
-    })
+    MOVE_TO_BOOKING: z.object({})
 };
 
 const router = Router();
 const serviceCartService = new ServiceCartService();
-
-// API: Check if cart item already exists for user
-router.post('/check',
-    verifyClient,
-    validateRequest({ body: SCHEMA.CHECK_CART_ITEM }),
-    async function (req: Request, res: Response, next: NextFunction) {
-        try {
-            const body = req.body;
-            const exists = await serviceCartService.checkCartItemExists(
-                req.userID as number,
-                body.branch_id,
-                body.service_id,
-                body.time_slot_id,
-                body.date
-            );
-            res.status(200).send(successResponse(
-                { exists, message: exists ? "Item already in cart" : "Item not in cart" },
-                "Cart item check completed"
-            ));
-        } catch (e) {
-            next(e);
-        }
-    }
-);
 
 // API 1: Add a new item to the user's service cart.
 router.post('/add',
@@ -74,7 +39,6 @@ router.post('/add',
                 req.userID as number,
                 body.branch_id,
                 body.service_id,
-                body.time_slot_id,
                 body.date,
                 body.vat_percentage
             );
@@ -134,7 +98,7 @@ router.get('/my-cart',
     }
 );
 // API 3: Update an existing item in the service cart.
-router.post('/update',
+router.patch('/update',
     verifyClient,
     validateRequest({ body: SCHEMA.UPDATE_CART_ITEM }),
     async function (req: Request, res: Response, next: NextFunction) {
@@ -145,7 +109,6 @@ router.post('/update',
                 req.userID as number,
                 body.branch_id,
                 body.service_id,
-                body.time_slot_id,
                 body.date,
                 body.vat_percentage
             );
@@ -157,20 +120,20 @@ router.post('/update',
 );
 
 // API 4: Delete an item from the service cart by its ID.
-router.delete('/delete',
+router.delete('/:id',
     verifyClient,
-    validateRequest({ body: SCHEMA.DELETE_CART_ITEM }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            const { id } = req.body;
-            await serviceCartService.deleteServiceCart(id, req.userID as number);
+            const { id } = req.params;
+            const cartItemId = parseInt(id, 10);
+            await serviceCartService.deleteServiceCart(cartItemId, req.userID as number);
             
             console.log('Successfully deleted cart item:', {
                 cartItemId: id,
                 userId: req.userID
             });
 
-            res.status(200).send(successResponse({ id }, "Service cart item deleted successfully"));
+            res.status(200).send(successResponse({ id: cartItemId }, "Service cart item deleted successfully"));
         } catch (e) {
             console.error('Error deleting cart item:', {
                 error: e,
@@ -181,6 +144,7 @@ router.delete('/delete',
         }
     }
 );
+
 // API 5: Move all items from a user's cart to a confirmed booking.
 router.post('/checkout',
     verifyClient,
