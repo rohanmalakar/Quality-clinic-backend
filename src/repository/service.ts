@@ -590,4 +590,28 @@ export default class ServiceRepository {
 
         return result;
     }
+
+    async getServiceBranchesByServiceId(connection: PoolConnection, service_id: number): Promise<ServiceBranch[]> {
+        try {
+            const [serviceBranches,] = await connection.query<ServiceBranchRow[]>('SELECT * from service_branch WHERE service_id = ?', [service_id]);
+            return serviceBranches;
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            }
+            logger.error(e)
+            throw ERRORS.DATABASE_ERROR
+        }
+    }
+    async deleteServiceBranch(connection: PoolConnection, service_id: number, branch_id: number): Promise<void> {
+        try {
+            await connection.query<ResultSetHeader>(
+                'DELETE FROM service_branch WHERE service_id = ? AND branch_id = ?',
+                [service_id, branch_id]
+            );
+        } catch (error) {
+            logger.error(`Error deleting service branch: ${error}`);
+            throw ERRORS.DATABASE_ERROR;
+        }
+    }
 }

@@ -84,7 +84,7 @@ router.post('/doctor',
 )
 
 router.post('/doctor/cancel',
-    verifyClient,
+    verifyAdmin,
     validateRequest({
         body: SCHEMA.DOCTOR_CANCEL
     }),
@@ -103,7 +103,7 @@ router.post('/doctor/cancel',
 )
 
 router.post('/doctor/complete',
-    verifyClient,
+    verifyAdmin,
     validateRequest({
         body: SCHEMA.DOCTOR_COMPLETE
     }),
@@ -200,7 +200,7 @@ router.post('/service/cancel',
 )
 
 router.post('/service/complete',
-    verifyClient,
+    verifyAdmin,
     validateRequest({
         body: SCHEMA.SERVICE_COMPLETE
     }),

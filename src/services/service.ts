@@ -325,12 +325,21 @@ export default class SettingService {
             if (!service) {
                 throw ERRORS.SERVICE_NOT_FOUND;
             }
+
+            const getAllServiceBranches = await this.serviceRepository.getServiceBranchesByServiceId(connection, service_id);
+            
+            
+            for(const existingServiceBranch of getAllServiceBranches) {
+                await this.serviceRepository.deleteServiceBranch(connection, existingServiceBranch.service_id, existingServiceBranch.branch_id); 
+            }
+
+
             const serviceBranches: ServiceBranch[] = [];
             await this.serviceRepository.setAllServiceBranchesInactive(connection, service_id);
             for(const branch of branches) {
                 const branch_new = await this.branchRepository.getBranchByIdOrNull(connection, branch.branch_id);
                 if (!branch_new) {
-                    throw ERRORS.BRANCH_NOT_FOUND;
+                    continue
                 }
                 const service_branch = await this.serviceRepository.createServiceBranch(connection, service_id, branch.branch_id, branch.maximum_booking_per_slot);
                 serviceBranches.push(service_branch);
