@@ -45,6 +45,11 @@ router.post('/add',
                 body.date,
                 body.vat_percentage
             );
+
+            if(Object.keys(newCartItem).length === 0) {
+                res.status(200).send(successResponseWithZeroData([], "Item already exists in cart."));
+                return;
+            }
             res.status(201).send(successResponse(newCartItem, "Item added to cart successfully"));
         } catch (e) {
             next(e);
