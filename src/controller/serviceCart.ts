@@ -2,7 +2,7 @@ import validateRequest from "@middleware/validaterequest";
 import pool from "@utils/db";
 import { verifyAdmin, verifyClient } from "@middleware/auth";
 import ServiceCartService from "@services/serviceCart";
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 import { NextFunction, Response, Router } from "express";
 import { Request } from "@customTypes/connection";
 import z from 'zod';
@@ -21,6 +21,9 @@ const SCHEMA = {
         service_id: z.number().int().positive(),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         vat_percentage: z.number().min(0),
+    }),
+    GET_MY_CART: z.object({
+        branch_id: z.coerce.number().optional()
     }),
     MOVE_TO_BOOKING: z.object({})
 };
@@ -84,11 +87,18 @@ router.get('/debug-auth',
 // API 2: Get service cart items for the authenticated user.
 router.get('/my-cart',
     verifyClient,
+    validateRequest({ query: SCHEMA.GET_MY_CART }),
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             // Get cart items with service details
-            const userCartItems = await serviceCartService.getServiceCartsByUser(req.userID as number);
+            const branchId = req.query.branch_id as number | undefined;
+            const userCartItems = await serviceCartService.getServiceCartsByUser(req.userID as number, branchId);
             
+            if(userCartItems.length === 0) {
+                res.status(200).send(successResponseWithZeroData([], "No items in the user's cart."));
+                return;
+            }
+
             // Only return the processed cart items with service details
             res.status(200).send(successResponse(userCartItems, "User cart items retrieved successfully"));
         } catch (e) {

@@ -164,11 +164,11 @@ export default class ServiceCartService {
     /**
      * Corresponds to API 2: Get all cart items for a user.
      */
-    async getServiceCartsByUser(userId: number): Promise<ServiceCart[]> {
+    async getServiceCartsByUser(userId: number, branchId?: number): Promise<ServiceCart[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
-            return await this.serviceCartRepository.getServiceCartsByUser(connection, userId);
+            return await this.serviceCartRepository.getServiceCartsByUser(connection, userId, branchId);
         } catch (e) {
             if (e instanceof RequestError) {
                 throw e;

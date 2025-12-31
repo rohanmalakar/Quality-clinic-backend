@@ -6,7 +6,7 @@ import { ERRORS } from "@utils/error";
 import { date, z } from "zod";
 import validateRequest from "@middleware/validaterequest";
 import BookingService from '@services/booking';
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 import redisClient from "@utils/redis";
 
 var router = Router();
@@ -260,6 +260,10 @@ router.get('/service/user',
                 next(ERRORS.AUTH_UNAUTHERISED);
             }
             const services = await bookingService.getUserServices(req.userID!!);
+             if(services.length === 0) {
+                res.status(200).send(successResponseWithZeroData([], "No service bookings found for the user."));
+                return;
+            }
             res.send(successResponse(services));
         } catch (e) {
             next(e)
@@ -275,6 +279,10 @@ router.get('/service',
                 next(ERRORS.AUTH_UNAUTHERISED);
             }
             const bookings = await bookingService.getAllServiceBookingsForUser(req.userID!!);
+             if(bookings.length === 0) {
+                res.status(200).send(successResponseWithZeroData([], "No service bookings found for the user."));
+                return;
+            }
             res.send(successResponse(bookings));
         } catch (e) {
             next(e)
@@ -392,6 +400,12 @@ router.get('/user/upcoming',
             }
             const branch_id = parseInt(req.query.branch_id as string);
             const bookings = await bookingService.getUpcomingBookings(branch_id, req.userID);
+
+            if(bookings.length === 0) {
+                res.status(200).send(successResponseWithZeroData([], "No upcoming bookings found."));
+                return;
+            }
+
             res.send(successResponse(bookings));
         }
         catch (e) {
@@ -414,6 +428,10 @@ router.get('/user/completed',
             }
             const branch_id = parseInt(req.query.branch_id as string);
             const bookings = await bookingService.getCompletedBookings(branch_id, req.userID);
+            if(bookings.length === 0) {
+                res.status(200).send(successResponseWithZeroData([], "No completed bookings found."));
+                return;
+            }
             res.send(successResponse(bookings));
         }
         catch (e) {
