@@ -7,7 +7,7 @@ import validateRequest from "@middleware/validaterequest";
 
 
 import DoctorService from '@services/doctor';
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 import { start } from "repl";
 import redisClient from "@utils/redis";
 
@@ -102,6 +102,11 @@ router.get('/',
         try {
             const { branch_id } = req.query as { branch_id?: number };
             const doctors = await doctorService.getAllDoctors(branch_id);
+            if(doctors.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No doctors found."));
+                return;
+            }
+
             res.json(successResponse(doctors));
         } catch (e) {
             next(e);
@@ -118,6 +123,11 @@ router.get('/speciality/:speciality',
                 return res.status(400).json({ success: false, message: 'Invalid speciality. Must be DENTIST or DERMATOLOGIST' });
             }
             const doctors = await doctorService.getDoctorsBySpeciality(speciality);
+            if(doctors.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No doctors found for the speciality."));
+                return;
+            }
+
             res.json(successResponse(doctors));
         } catch (e) {
             next(e);
@@ -151,6 +161,10 @@ router.get('/branch/:branch_id',
         try {
             const branch_id = parseInt(req.params.branch_id);
             const doctors = await doctorService.getDoctorForABranch(branch_id);
+            if(doctors.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No doctors found for the branch."));
+                return;
+            }
             res.json(successResponse(doctors));
         } catch (e) {
             next(e);
@@ -220,6 +234,10 @@ router.get('/branches',
         try {
             const doctor_id = parseInt(req.query.doctor_id as string);
             const doctorBranch = await doctorService.getDoctorBranches(doctor_id);
+            if(doctorBranch.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No branches found for the doctor."));
+                return;
+            }
             res.json(successResponse(doctorBranch));
         } catch (e) {
             next(e);
@@ -320,6 +338,10 @@ router.get('/time-slots',
             const doctor_id = parseInt(req.query.doctor_id as string);
             const slot_date = req.query.date as string; // Expecting YYYY-MM-DD
             const timeSlots = await doctorService.getDoctorTimeSlot(doctor_id, slot_date);
+            if(timeSlots.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No time slots found for the doctor on the given date."));
+                return;
+            }
             res.json(successResponse(timeSlots));
         } catch (e) {
             next(e);
@@ -336,6 +358,10 @@ router.get('/all/time-slot',
         try {
             const doctor_id = parseInt(req.query.doctor_id as string);
             const timeSlots = await doctorService.getAllDoctorTimeSlot(doctor_id);
+            if(timeSlots.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No time slots found for the doctor."));
+                return;
+            }
             res.json(successResponse(timeSlots));
         } catch (e) {
             next(e);
@@ -372,6 +398,10 @@ router.get('/featured',
         try {
             const { branch_id } = req.query as { branch_id?: number };
             const doctors = await doctorService.getFeaturedDoctors(branch_id);
+            if(doctors.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No featured doctors found."));
+                return;
+            }
             res.json(successResponse(doctors));
         } catch (e) {
             next(e)

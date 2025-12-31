@@ -4,7 +4,7 @@ import { NextFunction, Router, Response } from "express";
 import { Request } from '@customTypes/connection';
 import { z } from "zod";
 import NotificationService from '@services/notification';
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 
 var router = Router();
 
@@ -37,6 +37,10 @@ router.get('/all',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             const notifications = await notificationService.getAllNotifications();
+            if(notifications.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No notifications found."));
+                return;
+            }
             res.send(successResponse(notifications));
         } catch (e) {
             next(e)

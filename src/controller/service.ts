@@ -6,7 +6,7 @@ import { ERRORS } from "@utils/error";
 import { z } from "zod";
 import validateRequest from "@middleware/validaterequest";
 import ServiceService from '@services/service';
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 import { time } from "console";
 
 var router = Router();
@@ -85,6 +85,10 @@ router.get('/',
         try {
             const { branch_id } = req.query as { branch_id?: number };
             const services = await serviceService.getAll(branch_id);
+            if(services.length === 0) { 
+                res.status(200).send(successResponseWithZeroData("No services found. for this branch."));
+                return;
+            }
             res.json(successResponse(services));
         } catch (error) {
             next(error);
@@ -121,6 +125,10 @@ router.get('/all/category',
             const category_id = parseInt(req.query.category_id as string);
             const { branch_id } = req.query as { branch_id?: number };
             const services = await serviceService.getAllByCategory(category_id, branch_id);
+            if(services.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No services found for this category."));
+                return;
+            }
             res.json(successResponse(services));
         } catch (error) {
             next(error);
@@ -133,6 +141,10 @@ router.get('/category',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             const services = await serviceService.getAllCategory();
+            if(services.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No service categories found."));
+                return;
+            }
             res.json(successResponse(services));
         } catch (error) {
             next(error);
@@ -184,6 +196,10 @@ router.get('/branch',
         try {
             const branch_id = parseInt(req.query.branch_id as string);
             const branches = await serviceService.getServicesForBranch(branch_id);
+            if(branches.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No services found for the branch."));
+                return;
+            }
             res.json(successResponse(branches));
         } catch (error) {
             next(error);
@@ -215,6 +231,10 @@ router.get('/featured',
         try {
             const { branch_id } = req.query as { branch_id?: number };
             const services = await serviceService.getFeaturedServices(branch_id);
+            if(services.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No featured services found."));
+                return;
+            }
             res.json(successResponse(services));
         } catch (e) {
             next(e)

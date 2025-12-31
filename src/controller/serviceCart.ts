@@ -47,7 +47,7 @@ router.post('/add',
             );
 
             if(Object.keys(newCartItem).length === 0) {
-                res.status(200).send(successResponseWithZeroData([], "Item already exists in cart."));
+                res.status(200).send(successResponseWithZeroData("Item already exists in cart."));
                 return;
             }
             res.status(201).send(successResponse(newCartItem, "Item added to cart successfully"));
@@ -100,7 +100,7 @@ router.get('/my-cart',
             const userCartItems = await serviceCartService.getServiceCartsByUser(req.userID as number, branchId);
             
             if(userCartItems.length === 0) {
-                res.status(200).send(successResponseWithZeroData([], "No items in the user's cart."));
+                res.status(200).send(successResponseWithZeroData("No items in the user's cart."));
                 return;
             }
 

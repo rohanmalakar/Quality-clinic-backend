@@ -1,7 +1,7 @@
 import { verifyAdmin } from "@middleware/auth";
 import validateRequest from "@middleware/validaterequest";
 import BranchService from "@services/branch";
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 import { verify } from "crypto";
 import { NextFunction, Request, Response, Router } from "express";
 import z from 'zod'
@@ -32,8 +32,12 @@ const branchService = new BranchService();
 router.get('/',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
-            const branch = await branchService.getBranch();
-            res.send(successResponse(branch));
+            const branchs = await branchService.getBranch();
+            if(branchs.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No branches found."));
+                return;
+            }
+            res.send(successResponse(branchs));
         } catch (e) {
             next(e)
         }
@@ -84,6 +88,10 @@ router.get('/service',
         try {
             const service_id = parseInt(req.query.service_id as string);
             const branches = await branchService.getAllBranchForService(service_id);
+            if(branches.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No branches found for the service."));
+                return;
+            }
             res.json(successResponse(branches));
         } catch (error) {
             next(error);

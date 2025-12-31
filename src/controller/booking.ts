@@ -261,7 +261,7 @@ router.get('/service/user',
             }
             const services = await bookingService.getUserServices(req.userID!!);
              if(services.length === 0) {
-                res.status(200).send(successResponseWithZeroData([], "No service bookings found for the user."));
+                res.status(200).send(successResponseWithZeroData("No service bookings found for the user."));
                 return;
             }
             res.send(successResponse(services));
@@ -280,7 +280,7 @@ router.get('/service',
             }
             const bookings = await bookingService.getAllServiceBookingsForUser(req.userID!!);
              if(bookings.length === 0) {
-                res.status(200).send(successResponseWithZeroData([], "No service bookings found for the user."));
+                res.status(200).send(successResponseWithZeroData("No service bookings found for the user."));
                 return;
             }
             res.send(successResponse(bookings));
@@ -402,7 +402,7 @@ router.get('/user/upcoming',
             const bookings = await bookingService.getUpcomingBookings(branch_id, req.userID);
 
             if(bookings.length === 0) {
-                res.status(200).send(successResponseWithZeroData([], "No upcoming bookings found."));
+                res.status(200).send(successResponseWithZeroData("No upcoming bookings found."));
                 return;
             }
 
@@ -429,7 +429,7 @@ router.get('/user/completed',
             const branch_id = parseInt(req.query.branch_id as string);
             const bookings = await bookingService.getCompletedBookings(branch_id, req.userID);
             if(bookings.length === 0) {
-                res.status(200).send(successResponseWithZeroData([], "No completed bookings found."));
+                res.status(200).send(successResponseWithZeroData("No completed bookings found."));
                 return;
             }
             res.send(successResponse(bookings));

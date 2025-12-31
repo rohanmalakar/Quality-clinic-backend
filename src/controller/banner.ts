@@ -1,7 +1,7 @@
 import { verifyAdmin } from "@middleware/auth";
 import validateRequest from "@middleware/validaterequest";
 import BannerService from "@services/banner";
-import { successResponse } from "@utils/response";
+import { successResponse, successResponseWithZeroData } from "@utils/response";
 import { NextFunction, Request, Response, Router } from "express";
 import z from 'zod'
 
@@ -23,6 +23,10 @@ router.get('/',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             const banner = await bannerService.getBanners();
+            if(banner.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No active banners found."));
+                return;
+            }
             res.send(successResponse(banner));
         } catch (e) {
             next(e)
@@ -35,6 +39,10 @@ router.get('/all',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             const banner = await bannerService.getAllBanners();
+            if(banner.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No banners found."));
+                return;
+            }
             res.send(successResponse(banner));
         } catch (e) {
             next(e)
