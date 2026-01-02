@@ -23,7 +23,7 @@ const SCHEMA = {
         vat_percentage: z.number().min(0),
     }),
     GET_MY_CART: z.object({
-        branch_id: z.coerce.number().optional()
+        branch_id: z.string()
     }),
     MOVE_TO_BOOKING: z.object({})
 };
@@ -96,7 +96,7 @@ router.get('/my-cart',
     async function (req: Request, res: Response, next: NextFunction) {
         try {
             // Get cart items with service details
-            const branchId = req.query.branch_id as number | undefined;
+            const branchId = parseInt(req.query.branch_id as string, 10);
             const userCartItems = await serviceCartService.getServiceCartsByUser(req.userID as number, branchId);
             
             if(userCartItems.length === 0) {

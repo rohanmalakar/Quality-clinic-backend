@@ -61,10 +61,10 @@ export default class ServiceCartRepository {
      */
 
 
-    async getServiceCartsByUser(connection: PoolConnection, userId: number, branchId?: number): Promise<ServiceCart[]> {
+    async getServiceCartsByUser(connection: PoolConnection, userId: number, branchId: number): Promise<ServiceCart[]> {
         const [cartItems] = await connection.query<ServiceCart[]>(
-            'SELECT * FROM service_cart WHERE user_id = ?',
-            [userId]
+            'SELECT * FROM service_cart WHERE user_id = ? AND branch_id = ?',
+            [userId, branchId]
         ); 
         
         if (!cartItems || cartItems.length === 0) {
@@ -95,11 +95,10 @@ export default class ServiceCartRepository {
                     LEFT JOIN service s ON s.id = sc.service_id
                     LEFT JOIN service_category sca ON sca.id = s.category_id
                     LEFT JOIN branch b ON b.id = sc.branch_id
-                    WHERE sc.user_id = ?
+                    WHERE sc.user_id = ? AND sc.branch_id = ?
                     ORDER BY sc.id DESC`;
 
-        const [rows] = await connection.query<ServiceCart[]>(query, [userId]);
-        console.log("Cart items after JOIN:", rows);
+        const [rows] = await connection.query<ServiceCart[]>(query, [userId, branchId]);
         return rows;
     }
     /**

@@ -164,7 +164,7 @@ export default class ServiceCartService {
     /**
      * Corresponds to API 2: Get all cart items for a user.
      */
-    async getServiceCartsByUser(userId: number, branchId?: number): Promise<ServiceCart[]> {
+    async getServiceCartsByUser(userId: number, branchId: number): Promise<ServiceCart[]> {
         let connection: PoolConnection | null = null;
         try {
             connection = await pool.getConnection();
