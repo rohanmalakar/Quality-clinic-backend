@@ -125,6 +125,35 @@ export default class BookingService {
 
     }
 
+    async cancelDoctorBookingByUser(booking_id: number, user_id: number): Promise<BookingDoctor> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            await connection.beginTransaction();
+            const booking = await this.bookingRepository.getDoctorBookingByUserOrNull(connection, booking_id, user_id);
+            if (!booking) {
+                throw ERRORS.BOOKING_NOT_FOUND
+            }
+            if (booking.user_id !== user_id) {
+                throw ERRORS.BOOKING_NOT_FOUND;
+            }
+            
+            const newBooking = await this.bookingRepository.cancelDoctorByUser(connection, booking_id, user_id);
+            await connection.commit();
+            return newBooking;
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            }
+            throw ERRORS.INTERNAL_SERVER_ERROR;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+
+    }
+
     async completeDoctor(booking_id: number, user_id: number, is_admin: boolean): Promise<BookingDoctor> {
         let connection: PoolConnection | null = null;
         try {

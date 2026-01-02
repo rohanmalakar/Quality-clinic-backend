@@ -134,6 +134,16 @@ export default class BookingRepository {
         }
     }
 
+    async cancelDoctorByUser(connection: PoolConnection, booking_id: number, user_id: number): Promise<BookingDoctor> {
+        try {
+            await connection.query('UPDATE booking_doctor set status = "CANCELED" where id = ? AND user_id = ?', [booking_id, user_id]);
+            return await this.getBookingDoctor(connection, booking_id);
+        } catch (e) {
+            logger.error(e)
+            throw ERRORS.DATABASE_ERROR
+        }
+    }
+
     async rescheduleDoctor(connection: PoolConnection, booking_id: number): Promise<BookingDoctor> {
         try {
             await connection.query('UPDATE booking_doctor set status = "RESCHEDULE" where id = ?', [booking_id]);
@@ -190,6 +200,19 @@ export default class BookingRepository {
     async getBookingDoctorOrNull(connection: PoolConnection, booking_id: number): Promise<BookingDoctor | null> {
         try {
             const [result,] = await connection.query<BookingDoctorRow[]>('SELECT * FROM booking_doctor WHERE id = ?', [booking_id]);
+            if (result.length === 0) {
+                return null;
+            }
+            return result[0];
+        } catch (e) {
+            logger.error(e)
+            throw ERRORS.DATABASE_ERROR
+        }
+    }
+
+    async getDoctorBookingByUserOrNull(connection: PoolConnection, booking_id: number, user_id: number): Promise<BookingDoctor | null> {
+        try {
+            const [result,] = await connection.query<BookingDoctorRow[]>('SELECT * FROM booking_doctor WHERE id = ? AND user_id = ?', [booking_id, user_id]);
             if (result.length === 0) {
                 return null;
             }

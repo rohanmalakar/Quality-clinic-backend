@@ -23,6 +23,9 @@ const SCHEMA = {
     DOCTOR_CANCEL: z.object({
         booking_id: z.number()
     }),
+    DOCTOR_CANCEL_PARAMS: z.object({
+        booking_id: z.string().transform(Number)
+    }),
     DOCTOR_COMPLETE: z.object({
         booking_id: z.number()
     }),
@@ -51,6 +54,9 @@ const SCHEMA = {
     }),
     SERVICE_CANCEL: z.object({
         booking_id: z.number()
+    }),
+    DOCTOR_CANCEL_PARAMS_ByUser: z.object({
+        booking_id: z.string()
     }),
     SERVICE_COMPLETE: z.object({
         booking_id: z.number()
@@ -95,6 +101,25 @@ router.post('/doctor/cancel',
             }
             const body: z.infer<typeof SCHEMA.DOCTOR_CANCEL> = req.body;
             const booking = await bookingService.cancelDoctor(body.booking_id, req.userID!!, req.isAdmin ?? false);
+            res.send(successResponse(booking));
+        } catch (e) {
+            next(e)
+        }
+    }
+)
+
+router.patch('/doctor/user/cancel/:booking_id',
+    verifyClient,
+    validateRequest({
+        params: SCHEMA.DOCTOR_CANCEL_PARAMS_ByUser
+    }),
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.userID) {
+                next(ERRORS.USER_NOT_FOUND);
+            }
+            const booking_id= parseInt(req.params.booking_id as string);
+            const booking = await bookingService.cancelDoctorBookingByUser(booking_id, req.userID!!);
             res.send(successResponse(booking));
         } catch (e) {
             next(e)
