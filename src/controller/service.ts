@@ -185,6 +185,19 @@ router.put('/category/:category_id',
     }
 )
 
+router.delete('/category/:category_id',
+    verifyAdmin,
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            const category_id = parseInt(req.params.category_id);
+            const category = await serviceService.deleteCategory(category_id);
+            res.json(successResponse(category,"Category deleted successfully."));
+        } catch (error) {
+            next(error);
+        }
+    }
+)
+
 // Get all services for a branch
 router.get('/branch',
     validateRequest({

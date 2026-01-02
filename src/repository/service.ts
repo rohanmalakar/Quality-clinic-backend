@@ -193,6 +193,15 @@ export default class ServiceRepository {
         }
     }
 
+    async deleteCategory(connection: PoolConnection, category_id: number): Promise<void> {
+        try {
+            await connection.query<ResultSetHeader>('DELETE FROM service_category WHERE id = ?', [category_id]);
+        } catch (error) {
+            logger.error(`Error deleting category: ${error}`);
+            throw ERRORS.DATABASE_ERROR;
+        }
+    }
+
     async updateCategory(connection: PoolConnection, id: number, name_en: string, name_ar: string, image_ar: string, image_en: string, type: string): Promise<ServiceCategory> {
         try {
             await connection.query<ResultSetHeader>(

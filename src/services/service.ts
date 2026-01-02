@@ -221,6 +221,26 @@ export default class SettingService {
             throw ERRORS.INTERNAL_SERVER_ERROR;
         }
     }
+
+    async deleteCategory(category_id: number): Promise<ServiceCategory> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            let category = await this.serviceRepository.getServiceCategoryByIdOrNull(connection, category_id);
+            if (!category) {
+                throw ERRORS.INVALID_SERVICE_CATEGORY;
+            }
+           
+            await this.serviceRepository.deleteCategory(connection, category_id);
+            return category;
+        } catch (error) {
+            if(error instanceof RequestError) {
+                throw error;
+            }
+            logger.error(`Error updating service: ${error}`);
+            throw ERRORS.INTERNAL_SERVER_ERROR;
+        }
+    }
         
 
     async getServicesForBranch(branch_id: number): Promise<ServiceView[]> {
