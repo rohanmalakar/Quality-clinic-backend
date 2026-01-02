@@ -107,7 +107,7 @@ export default class ServiceCartRepository {
      */
     async getServiceCartById(connection: PoolConnection, id: number): Promise<ServiceCart | null> {
         const [rows] = await connection.query<ServiceCart[]>(
-            'SELECT * FROM service_cart WHERE id = ? AND branch_id = ?',
+            'SELECT * FROM service_cart WHERE id = ?',
             [id]
         );
         // Return the found item, or null if it doesn't exist.
