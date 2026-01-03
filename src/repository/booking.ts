@@ -657,9 +657,6 @@ export default class BookingRepository {
                 sc.type AS service_category_type,
                 sc.name_en AS service_category_name_en,
                 sc.name_ar AS service_category_name_ar,
-                bs.time_slot_id AS time_slot_id,
-                ts.start_time AS time_slot_start_time,
-                ts.end_time AS time_slot_end_time,
                 bs.date AS booking_date,
                 bs.status AS booking_status
             FROM
@@ -671,9 +668,7 @@ export default class BookingRepository {
             LEFT JOIN
                 service s ON bs.service_id = s.id
             LEFT JOIN
-                service_category sc ON s.category_id = sc.id
-            LEFT JOIN
-                service_time_slot ts ON bs.time_slot_id = ts.id WHERE bs.id = ?`, [booking_id]);
+                service_category sc ON s.category_id = sc.id WHERE bs.id = ?`, [booking_id]);
             if (result.length === 0) {
                 return null;
             }
