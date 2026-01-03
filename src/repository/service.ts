@@ -34,6 +34,42 @@ export default class ServiceRepository {
         }
     }
 
+    async searchServices(connection: PoolConnection, keyword: string, branch_id?: number): Promise<Service[]> {
+        try {
+            const searchPattern = `%${keyword}%`;
+            
+            if (!branch_id || branch_id === 0) {
+                const [services,] = await connection.query<ServiceRow[]>(
+                    `SELECT * FROM service 
+                    WHERE name_en LIKE ? 
+                    OR name_ar LIKE ? 
+                    OR about_en LIKE ? 
+                    OR about_ar LIKE ?`,
+                    [searchPattern, searchPattern, searchPattern, searchPattern]
+                );
+                return services;
+            } else {
+                const [services,] = await connection.query<ServiceRow[]>(
+                    `SELECT DISTINCT s.* FROM service s
+                    JOIN service_branch sb ON s.id = sb.service_id
+                    WHERE sb.branch_id = ?
+                    AND (s.name_en LIKE ? 
+                    OR s.name_ar LIKE ? 
+                    OR s.about_en LIKE ? 
+                    OR s.about_ar LIKE ?)`,
+                    [branch_id, searchPattern, searchPattern, searchPattern, searchPattern]
+                );
+                return services;
+            }
+        } catch (e) {
+            if (e instanceof RequestError) {
+                throw e;
+            }
+            logger.error(e)
+            throw ERRORS.DATABASE_ERROR
+        }
+    }
+
     async getServiceById(connection: PoolConnection, service_id: number): Promise<Service> {
         try {
             const [services,] = await connection.query<ServiceRow[]>('SELECT * from service WHERE id = ?', [service_id]);

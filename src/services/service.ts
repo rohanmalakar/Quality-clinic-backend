@@ -53,6 +53,36 @@ export default class SettingService {
         }
     }
 
+    async search(keyword: string, branch_id?: number): Promise<ServiceView[]> {
+        let connection: PoolConnection | null = null;
+        try {
+            connection = await pool.getConnection();
+            const services = await this.serviceRepository.searchServices(connection, keyword, branch_id);
+            const ServiceCategory = await this.serviceRepository.getAllServicesCategories(connection);
+            const serviceCategoryMap = new Map<number, ServiceCategory>();
+            ServiceCategory.forEach((category) => {
+                serviceCategoryMap.set(category.id, category);
+            });
+            const serviceViews: ServiceView[] = []
+            for (let i = 0; i < services.length; i++) {
+                const service = services[i];
+                const serviceCategory = serviceCategoryMap.get(service.category_id);
+                if (!serviceCategory) {
+                    continue;
+                }
+                serviceViews.push(createServiceView(service, serviceCategory));
+            }
+            return serviceViews;
+        } catch (error) {
+            logger.error(`Error searching services: ${error}`);
+            throw ERRORS.INTERNAL_SERVER_ERROR;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
+    }
+
     async create(name_en: string, name_ar: string, category_id: number, about_en: string, about_ar: string, actual_price: number, discounted_price: number, service_image_en_url: string, service_image_ar_url: string, can_redeem: boolean ): Promise<ServiceView> {
         let connection: PoolConnection | null = null;
         try {

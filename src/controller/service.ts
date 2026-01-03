@@ -73,11 +73,32 @@ const SCHEMA = {
     }),
     GET_FEATURED_SERVICES: z.object({
         branch_id: z.coerce.number().optional()
+    }),
+    SEARCH_SERVICES: z.object({
+        keyword: z.string().min(1),
+        branch_id: z.coerce.number().optional()
     })
 
 }
 
 var router = Router();
+
+router.get('/search',
+    validateRequest({ query: SCHEMA.SEARCH_SERVICES }),
+    async function (req: Request, res: Response, next: NextFunction) {
+        try {
+            const { keyword, branch_id } = req.query as unknown as { keyword: string; branch_id?: number };
+            const services = await serviceService.search(keyword, branch_id);
+            if(services.length === 0) {
+                res.status(200).send(successResponseWithZeroData("No services found matching the search criteria."));
+                return;
+            }
+            res.json(successResponse(services));
+        } catch (error) {
+            next(error);
+        }
+    }
+)
 
 router.get('/',
     validateRequest({ query: z.object({ branch_id: z.coerce.number().optional() }) }),
