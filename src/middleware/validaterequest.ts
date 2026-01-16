@@ -1,5 +1,4 @@
-// code taken from https://github.com/Aquila169/zod-express-middleware/blob/c434943b385eca214533f6c38caf83d513477dc8/src/index.ts#L50
-// this has body as well as query parser right now using just body modify if needed
+
 import { NextFunction, Response } from 'express';
 import { ZodSchema } from 'zod';
 

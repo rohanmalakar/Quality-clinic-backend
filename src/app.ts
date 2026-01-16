@@ -68,7 +68,9 @@ async function start() {
   'https://safweteltatwer.com', // if your backend is also calling APIs
   'http://localhost:3000', // local frontend dev
   'https://secure.paytabs.com',
-  'https://secure.paytabs.sa'
+  'https://secure.paytabs.sa',
+  "https://qcdev.atlasits.cloud",
+  "http://localhost:58750"
 ];
 
 app.use(cors({
@@ -131,7 +133,7 @@ app.use(cors({
   app.listen(PORT, () => {
     logger.info(`🚀 App is listening on port ${PORT}`);
   });
-  //-------------------------------------Local Code End---------------------------------//
+  // -------------------------------------Local Code End---------------------------------//
 
 
   //-------------------------------------Production  Start---------------------------------//
